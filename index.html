@@ -363,5 +363,36 @@ renderFeed();renderProfile();renderLayerList();
 })();
 </script>
 
+
+<script>
+(function(){
+ const surface=document.getElementById('art');
+ if(!surface)return;
+ let active=false,previous=null;
+ function point(e){const r=surface.getBoundingClientRect();return{x:(e.clientX-r.left)*surface.width/r.width,y:(e.clientY-r.top)*surface.height/r.height}}
+ function stop(e){e.preventDefault();e.stopImmediatePropagation()}
+ surface.addEventListener('pointerdown',function(e){
+  stop(e);if(e.button!==undefined&&e.button!==0)return;
+  if(!ctx&&typeof activeLayer==='function'&&activeLayer())ctx=activeLayer().ctx;
+  if(!ctx)return;
+  active=true;previous=point(e);
+  try{surface.setPointerCapture(e.pointerId)}catch(err){}
+  if(tool==='text'){stampText(previous.x,previous.y);active=false;return}
+  snapshot();
+  if(tool==='spray')spray(previous.x,previous.y);
+  else{ctx.fillStyle=$('color').value;ctx.beginPath();ctx.arc(previous.x,previous.y,Math.max(2,+$('size').value/10),0,Math.PI*2);ctx.fill();renderLayers()}
+ },true);
+ surface.addEventListener('pointermove',function(e){
+  if(!active)return;stop(e);const p=point(e);
+  if(tool==='draw'){ctx.strokeStyle=$('color').value;ctx.lineWidth=Math.max(1,+$('size').value/5);ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(previous.x,previous.y);ctx.lineTo(p.x,p.y);ctx.stroke();renderLayers()}
+  else if(tool==='spray')spray(p.x,p.y);
+  previous=p;
+ },true);
+ function finish(e){if(!active)return;stop(e);active=false;previous=null}
+ surface.addEventListener('pointerup',finish,true);
+ surface.addEventListener('pointercancel',finish,true);
+})();
+</script>
+
 </body>
 </html>
