@@ -563,6 +563,17 @@ renderFeed();renderProfile();renderLayerList();
  const colorsMenu=makeMenu('Colors','quickMenuColors');
  const canvasMenu=makeMenu('Canvas','quickMenuCanvas');
  const brushMenu=makeMenu('Brush & Effects','quickMenuBrush');
+ const editMenu=makeMenu('Edit','quickMenuEdit');
+ const viewMenu=makeMenu('View','quickMenuView');
+ const exportMenu=makeMenu('Export','quickMenuExport');
+ const moveButton=(id,target)=>{const el=document.getElementById(id);if(el){target.appendChild(el);return el}return null};
+ const actionGroup=(target,label,ids)=>{const group=document.createElement('div');group.className='quick-menu-actions';const title=document.createElement('div');title.className='quick-menu-label';title.textContent=label;group.appendChild(title);ids.forEach(id=>moveButton(id,group));target.appendChild(group)};
+ actionGroup(editMenu,'History & cleanup',['undo','clear','clearLayer']);
+ actionGroup(brushMenu,'Extra effects',['drip','splatter','glow','shadow']);
+ actionGroup(viewMenu,'Canvas view',['zoomOut','zoomReset','zoomIn','fullscreen']);
+ actionGroup(exportMenu,'Save your artwork',['download']);
+ const backgroundAction=document.getElementById('background');if(backgroundAction){const wrap=document.createElement('div');wrap.className='quick-menu-actions';wrap.appendChild(backgroundAction);canvasMenu.appendChild(wrap)}
+
  const put=(id,target)=>{const el=document.getElementById(id);if(el){const field=el.closest('.field')||el;target.appendChild(field);return field}return null};
  const modes=panel.querySelector('.tools')?.closest('.field')||panel.querySelector('.tools');
  if(modes)toolsMenu.appendChild(modes);
@@ -595,6 +606,11 @@ renderFeed();renderProfile();renderLayerList();
  .quick-menu-panel .row{flex-wrap:wrap}
  .quick-menu-panel details{position:relative}
  .quick-menu-action button{width:100%}
+ .quick-menu-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:7px;border-radius:8px;background:#ffffff08}
+ .quick-menu-actions button{min-width:0;white-space:normal}
+ .quick-menu-label{grid-column:1/-1;font-size:10px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
+ #quickMenuEdit .quick-menu-actions:first-child button:first-of-type{grid-column:1/-1}
+
  .quick-menu:focus-within>summary{outline:2px solid var(--lime);outline-offset:2px}
  @media(max-width:600px){.quick-menu-bar{gap:2px}.quick-menu>summary{padding:9px 8px;font-size:12px}.quick-menu-panel{position:fixed;left:12px;right:12px;top:auto;min-width:0;max-width:none;max-height:55vh}}
  `;
