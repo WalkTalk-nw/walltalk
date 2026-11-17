@@ -162,7 +162,7 @@ button:focus-visible,.tool-details summary:focus-visible{outline:2px solid var(-
         <div class="field"><label for="words">Your lettering</label><input id="words" type="text" maxlength="22" value="WALLTALK" placeholder="Type your tag..."></div>
         <div class="field"><label>Creation mode</label><div class="tools"><button type="button" class="tool" id="selectorTool" aria-pressed="false">↖ Select</button><button type="button" class="tool" data-tool="text">✦ Lettering</button><button type="button" class="tool" data-tool="spray">✺ Spray</button><button type="button" class="tool active" data-tool="draw">〰 Draw</button></div></div>
         <details class="tool-details" open><summary>▧ Canvas background</summary><div class="tool-details-body"><div class="field"><label for="bgColor">Background color</label><input id="bgColor" type="color" value="#252027"></div><div class="field"><label for="bgStyle">Background design</label><select id="bgStyle"><option value="plain">Plain color</option><option value="grid">Subtle grid</option><option value="dots">Spray dots</option><option value="brick">Brick wall</option><option value="concrete">Concrete texture</option></select></div><div class="field"><label for="bgTexture">Texture strength</label><input id="bgTexture" type="range" min="0" max="100" value="22"></div><button type="button" class="btn secondary small" id="applyBackground">Apply background</button></div></details><div class="field"><label>Paint color</label><div class="row"><input type="color" id="color" value="#c7ff3d"><select id="font" aria-label="Graffiti lettering font"><option value="Bungee">Bungee · Block</option><option value="Permanent Marker">Permanent Marker · Handstyle</option><option value="Rubik Wet Paint">Wet Paint · Drippy</option><option value="Bangers">Bangers · Comic</option><option value="Black Ops One">Black Ops · Stencil</option><option value="Nosifer">Nosifer · Horror</option><option value="Impact">Impact · Bold</option><option value="Arial Black">Arial Black</option><option value="monospace">Mono</option></select></div><details class="tool-details"><summary>⌕ Find a graffiti font</summary><div class="tool-details-body"><input id="fontSearch" class="font-search" type="text" placeholder="Search bubble, wildstyle, 3D..." aria-label="Search Google Fonts by style"><div class="note">Search by style or font name, then choose a preview.</div><div id="googleFontResults" class="google-font-results" aria-live="polite"></div><div id="fontSearchStatus" class="search-status">Try bubble, marker, block, comic, stencil, drip or 3D.</div></div></details><details class="tool-details"><summary>＋ Saved style references</summary><div class="tool-details-body"><label class="btn secondary small" for="fontImageUpload" style="display:block;text-align:center;cursor:pointer">＋ Add style screenshot</label><input id="fontImageUpload" type="file" accept="image/*" class="hidden"><input id="fontRefName" type="text" maxlength="28" placeholder="Name this style reference (optional)" style="margin-top:8px"><div id="fontRefPreview" class="font-reference hidden"></div><div id="fontRefList" class="font-reference-list"></div></div></details></div>
-        <div class="field"><label for="size">Brush / letter size <span id="sizeVal">72</span></label><input type="range" id="size" min="8" max="150" value="72"></div><div class="field" id="sprayCapField"><label for="sprayCap">Spray cap</label><select id="sprayCap"><option value="soft">Soft / diffuse</option><option value="skinny">Skinny line</option><option value="fat">Fat cap</option><option value="calligraphy">Calligraphy</option><option value="flare">Flare</option><option value="splatter">Splatter</option></select><div class="note" id="sprayCapHint">Soft, even mist.</div></div>
+        <div class="field"><label for="size">Brush / letter size <span id="sizeVal">72</span></label><input type="range" id="size" min="8" max="150" value="72"></div><div class="field" id="sprayCapField"><label for="sprayCap">Spray cap</label><select id="sprayCap"><option value="soft">Soft / diffuse</option><option value="skinny">Skinny line</option><option value="fat">Fat cap</option><option value="calligraphy">Calligraphy</option><option value="flare">Flare</option><option value="splatter">Splatter</option><option value="lego">Lego cap</option></select><div class="note" id="sprayCapHint">Soft, even mist.</div></div>
         <div class="field"><label for="outline">Outline color</label><div class="row"><input type="color" id="outline" value="#ff4fa3"><button class="btn secondary small" id="background">Change wall</button></div></div>
         <div class="field"><label>Layers</label><div class="row"><button class="btn secondary small" id="addLayer">＋ Add layer</button><button class="btn secondary small" id="clearLayer">Clear active</button></div><div id="layerList" class="layer-list"></div>
 <div class="field object-editor" id="objectEditor">
@@ -267,6 +267,25 @@ function spray(x,y){
  }else if(cap==='flare'){
   ctx.globalAlpha=.5;ctx.lineWidth=Math.max(2,radius*.55);ctx.beginPath();ctx.moveTo(x-ux*radius,y-uy*radius);ctx.lineTo(x+ux*radius,y+uy*radius);ctx.stroke();
   for(let i=0;i<30;i++){let t=(Math.random()-.5)*radius*1.4,d=(Math.random()-.5)*radius*.3;ctx.globalAlpha=.12+Math.random()*.2;ctx.beginPath();ctx.arc(x+nx*t+ux*d,y+ny*t+uy*d,Math.random()*2.2+.5,0,Math.PI*2);ctx.fill()}
+ }else if(cap==='lego'){
+  // Chunky, block-like spray made from staggered square paint marks.
+  const cell=Math.max(3,Math.round(radius*.16)),spread=radius*.78;
+  ctx.globalAlpha=.82;
+  for(let row=-4;row<=4;row++){
+   for(let col=-4;col<=4;col++){
+    const ox=(col+(row%2)*.5)*cell*1.65,oy=row*cell*1.65;
+    const px=x+nx*ox+ux*oy,py=y+ny*ox+uy*oy;
+    if(Math.hypot(px-x,py-y)>spread)continue;
+    ctx.globalAlpha=.45+Math.random()*.4;
+    const side=cell*(.65+Math.random()*.45);
+    ctx.fillRect(px-side/2,py-side/2,side,side);
+   }
+  }
+  for(let i=0;i<18;i++){
+   const a=Math.random()*Math.PI*2,d=spread+Math.random()*radius*.35,side=cell*(.35+Math.random()*.6);
+   ctx.globalAlpha=.25+Math.random()*.45;
+   ctx.fillRect(x+Math.cos(a)*d-side/2,y+Math.sin(a)*d-side/2,side,side);
+  }
  }else{
   const spread=cap==='fat'?radius*.85:radius*.48;
   for(let i=0;i<count;i++){let a=Math.random()*Math.PI*2,d=Math.sqrt(Math.random())*spread,along=(Math.random()-.5)*radius*.22;
