@@ -106,7 +106,7 @@ footer{border-top:1px solid #ffffff17;margin-top:42px;padding-top:20px;color:#82
       </div>
       <aside class="panel controls" id="toolPanel">
         <div class="field"><label for="words">Your lettering</label><input id="words" type="text" maxlength="22" value="WALLTALK" placeholder="Type your tag..."></div>
-        <div class="field"><label>Creation mode</label><div class="tools"><button class="tool" data-tool="text">✦ Lettering</button><button class="tool" data-tool="spray">✺ Spray</button><button class="tool active" data-tool="draw">〰 Draw</button></div></div>
+        <div class="field"><label>Creation mode</label><div class="tools"><button type="button" class="tool" data-tool="text">✦ Lettering</button><button type="button" class="tool" data-tool="spray">✺ Spray</button><button type="button" class="tool active" data-tool="draw">〰 Draw</button></div></div>
         <div class="field"><label>Paint color</label><div class="row"><input type="color" id="color" value="#c7ff3d"><select id="font" aria-label="Graffiti lettering font"><option value="Bungee">Bungee · Block</option><option value="Permanent Marker">Permanent Marker · Handstyle</option><option value="Rubik Wet Paint">Wet Paint · Drippy</option><option value="Bangers">Bangers · Comic</option><option value="Black Ops One">Black Ops · Stencil</option><option value="Nosifer">Nosifer · Horror</option><option value="Impact">Impact · Bold</option><option value="Arial Black">Arial Black</option><option value="monospace">Mono</option></select></div><input id="fontSearch" class="font-search" type="text" placeholder="⌕ Search: bubble, wildstyle, 3D, stencil..." aria-label="Search Google Fonts by style"><div class="note">Search Google Fonts by name or look. Choose a suggestion to preview and use it.</div><div id="googleFontResults" class="google-font-results" aria-live="polite"></div><div id="fontSearchStatus" class="search-status">Try bubble, marker, block, comic, stencil, drip or 3D.</div><div class="row" style="margin-top:9px"><label class="btn secondary small" for="fontImageUpload" style="text-align:center;cursor:pointer">＋ Add style screenshot</label><input id="fontImageUpload" type="file" accept="image/*" class="hidden"></div><input id="fontRefName" type="text" maxlength="28" placeholder="Name this style reference (optional)" style="margin-top:8px"><div id="fontRefPreview" class="font-reference hidden"></div><div id="fontRefList" class="font-reference-list"></div></div>
         <div class="field"><label for="size">Brush / letter size <span id="sizeVal">72</span></label><input type="range" id="size" min="8" max="150" value="72"></div>
         <div class="field"><label for="outline">Outline color</label><div class="row"><input type="color" id="outline" value="#ff4fa3"><button class="btn secondary small" id="background">Change wall</button></div></div>
@@ -334,6 +334,32 @@ renderFeed();renderProfile();renderLayerList();
  }
  input.addEventListener('input',search);
  search();
+})();
+</script>
+
+
+<script>
+(function(){
+ const modes=document.querySelector('.tools');
+ if(!modes)return;
+ modes.addEventListener('click',function(event){
+  const button=event.target.closest('button[data-tool]');
+  if(!button)return;
+  event.preventDefault();
+  const mode=button.getAttribute('data-tool');
+  if(!['text','spray','draw'].includes(mode))return;
+  if(typeof tool!=='undefined')tool=mode;
+  modes.querySelectorAll('button[data-tool]').forEach(item=>{
+   const active=item===button;
+   item.classList.toggle('active',active);
+   item.setAttribute('aria-pressed',active?'true':'false');
+  });
+  const words=document.getElementById('words');
+  if(words)words.disabled=false;
+ },true);
+ modes.querySelectorAll('button[data-tool]').forEach(button=>{
+  button.setAttribute('aria-pressed',button.classList.contains('active')?'true':'false');
+ });
 })();
 </script>
 
