@@ -567,6 +567,11 @@ renderFeed();renderProfile();renderLayerList();
  const viewMenu=makeMenu('View','quickMenuView');
  const exportMenu=makeMenu('Export','quickMenuExport');
  const stickerMenu=makeMenu('Stickers','quickMenuStickers');
+ const layersMenu=makeMenu('Layers','quickMenuLayers');
+ const layerList=document.getElementById('layerList');
+ const layersPanel=layerList?.closest('.field');
+ if(layersPanel)layersMenu.appendChild(layersPanel);
+
  const stickerPanel=[...panel.querySelectorAll('details')].find(d=>d.textContent.includes('Stickers & wall designs'));
  if(stickerPanel)stickerMenu.appendChild(stickerPanel);
 
