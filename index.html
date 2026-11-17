@@ -546,5 +546,52 @@ renderFeed();renderProfile();renderLayerList();
  const layerHost=document.getElementById('layerList');if(layerHost)observer.observe(layerHost,{childList:true,subtree:true});
 })();
 </script>
+
+<script>
+(function(){
+ const panel=document.getElementById('toolPanel');
+ const canvasPanel=document.getElementById('canvasWrap')?.parentElement;
+ if(!panel||!canvasPanel||document.getElementById('quickToolbar'))return;
+ const toolbar=document.createElement('section');
+ toolbar.id='quickToolbar';toolbar.className='quick-toolbar';
+ toolbar.innerHTML='<div class="quick-toolbar-head"><strong>Quick controls</strong><span>Tools for your canvas</span></div><div class="quick-toolbar-grid"></div>';
+ const grid=toolbar.querySelector('.quick-toolbar-grid');
+ const move=(el)=>{if(el)grid.appendChild(el)};
+ const words=document.getElementById('words')?.closest('.field');
+ const modes=panel.querySelector('.tools')?.closest('.field');
+ const bg=panel.querySelector('details.tool-details');
+ const color=document.getElementById('color');
+ const colorField=color?.closest('.field');
+ const font=document.getElementById('font');
+ const fontRow=font?.parentElement;
+ if(font&&fontRow){const fontField=document.createElement('div');fontField.className='field';fontField.innerHTML='<label for="font">Lettering font</label>';fontField.appendChild(font);panel.insertBefore(fontField,panel.querySelector('.field:has(#size)'));}
+ if(color&&colorField){colorField.querySelector('label')?.remove();const row=colorField.querySelector('.row');if(row){row.insertBefore(color, row.firstChild);row.querySelector('#font')?.remove();}colorField.querySelector('details')?.remove();move(colorField);}
+ move(words);move(modes);move(bg);
+ const size=document.getElementById('size')?.closest('.field');move(size);
+ const outline=document.getElementById('outline')?.closest('.field');move(outline);
+ const effects=[...panel.querySelectorAll('.field')].find(x=>x.textContent.includes('Quick effects'));move(effects);
+ const addText=document.getElementById('addText');if(addText){const wrap=document.createElement('div');wrap.className='quick-toolbar-action';wrap.append(addText);grid.append(wrap);}
+ canvasPanel.appendChild(toolbar);
+ const fontSearch=panel.querySelector('details.tool-details');if(fontSearch)fontSearch.open=false;
+ const bgSummary=bg?.querySelector('summary');if(bgSummary)bgSummary.textContent='▧ Background';
+ const css=document.createElement('style');
+ css.textContent=`
+ .quick-toolbar{margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:14px;background:#111719}
+ .quick-toolbar-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
+ .quick-toolbar-head strong{font-size:13px;color:var(--lime);letter-spacing:.06em;text-transform:uppercase}
+ .quick-toolbar-head span{font-size:11px;color:var(--muted)}
+ .quick-toolbar-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;align-items:start}
+ .quick-toolbar-grid>.field{min-width:0;margin:0;padding:9px;border-radius:10px;background:#ffffff08}
+ .quick-toolbar-grid input,.quick-toolbar-grid select{max-width:100%;min-width:0}
+ .quick-toolbar-grid input[type=range]{width:100%}
+ .quick-toolbar-grid .row{flex-wrap:wrap}
+ .quick-toolbar-action{grid-column:1/-1}
+ .quick-toolbar-action button{width:100%}
+ @media(max-width:760px){.quick-toolbar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+ @media(max-width:420px){.quick-toolbar{padding:10px}.quick-toolbar-grid{grid-template-columns:minmax(0,1fr)}.quick-toolbar-head{align-items:flex-start;flex-direction:column}}
+ `;
+ document.head.appendChild(css);
+})();
+</script>
 </body>
 </html>
