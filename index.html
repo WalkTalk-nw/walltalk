@@ -257,7 +257,7 @@ let selectedRealFont=$('font').value;
 function loadGoogleFont(family){let id='google-font-'+family.toLowerCase().replace(/[^a-z0-9]+/g,'-');if(document.getElementById(id))return;let link=document.createElement('link');link.id=id;link.rel='stylesheet';link.href='https://fonts.googleapis.com/css2?family='+encodeURIComponent(family).replace(/%20/g,'+')+'&display=swap';document.head.append(link)}
 function renderGoogleFontResults(query){
  let q=query.trim().toLowerCase(),host=$('googleFontResults');host.innerHTML='';
- const aliases={letters:'bubble',lettering:'graffiti',fonts:'font',style:'graffiti',styles:'graffiti',street:'graffiti',streetwear:'graffiti',wildstyle:'graffiti',throwup:'bubble','throw-up':'bubble',rounded:'bubble',chunky:'bubble',3d:'3d',dimensional:'3d'};
+ const aliases={letters:'bubble',lettering:'graffiti',fonts:'font',style:'graffiti',styles:'graffiti',street:'graffiti',streetwear:'graffiti',wildstyle:'graffiti',throwup:'bubble','throw-up':'bubble',rounded:'bubble',chunky:'bubble','3d':'3d',dimensional:'3d'};
  let tokens=q.split(' ').filter(Boolean).map(t=>aliases[t]||t).filter(t=>t!=='font');
  const catalogText=f=>(f.name+' '+f.tags+' '+f.category).toLowerCase();
  let matches=googleGraffitiFonts.filter(f=>!tokens.length||tokens.every(t=>catalogText(f).includes(t)));
