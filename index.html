@@ -648,11 +648,51 @@ renderFeed();renderProfile();renderLayerList();
  }
  const effects=[...panel.querySelectorAll('.field')].find(x=>x.textContent.includes('Quick effects'));
  if(effects)brushMenu.appendChild(effects);
+ const shadowStudio=document.createElement('div');
+ shadowStudio.className='field shadow-studio';
+ shadowStudio.innerHTML='<label>Shadow studio</label><div class="row"><label for="shadowColor">Shadow color</label><input type="color" id="shadowColor" value="#08090d"></div><div class="field"><label for="shadowDepth">Depth / spread <span id="shadowDepthValue">18</span></label><input id="shadowDepth" type="range" min="2" max="60" value="18"></div><div class="field"><label for="shadowBlur">Softness <span id="shadowBlurValue">4</span></label><input id="shadowBlur" type="range" min="0" max="30" value="4"></div><div class="field"><label for="shadowAngle">Direction <span id="shadowAngleValue">45°</span></label><input id="shadowAngle" type="range" min="0" max="360" value="45"></div><div class="shadow-actions"><button type="button" class="btn secondary small" data-shadow="drop">Drop shadow</button><button type="button" class="btn secondary small" data-shadow="3d">3D shadow</button><button type="button" class="btn secondary small" data-shadow="perspective">Perspective shadow</button><button type="button" class="btn secondary small" data-shadow="panoramic">Panoramic shadow</button></div><div class="note">Applies the selected shadow style to your current lettering on the active layer.</div>';
+ brushMenu.appendChild(shadowStudio);
+ const shadowDepth=shadowStudio.querySelector('#shadowDepth'),shadowBlur=shadowStudio.querySelector('#shadowBlur'),shadowAngle=shadowStudio.querySelector('#shadowAngle');
+ [['shadowDepth','shadowDepthValue',''],['shadowBlur','shadowBlurValue',''],['shadowAngle','shadowAngleValue','°']].forEach(([inputId,valueId,suffix])=>{const input=shadowStudio.querySelector('#'+inputId),value=shadowStudio.querySelector('#'+valueId);input.addEventListener('input',()=>value.textContent=input.value+suffix)});
+ shadowStudio.querySelectorAll('[data-shadow]').forEach(button=>button.addEventListener('click',()=>{
+  const mode=button.dataset.shadow;
+  const text=document.getElementById('words')?.value.trim()||'WALLTALK';
+  const size=Number(document.getElementById('size')?.value||72);
+  const font=document.getElementById('font')?.value||'Bungee';
+  const color=document.getElementById('color')?.value||'#c7ff3d';
+  const outline=document.getElementById('outline')?.value||'#ff4fa3';
+  const depth=Number(shadowDepth.value),blur=Number(shadowBlur.value),angle=Number(shadowAngle.value)*Math.PI/180;
+  const dx=Math.cos(angle)*depth,dy=Math.sin(angle)*depth;
+  if(typeof snapshot==='function')snapshot();
+  ctx.save();ctx.font='1000 '+size+'px "'+font+'"';ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';
+  if(mode==='drop'){
+   ctx.shadowColor=shadowStudio.querySelector('#shadowColor').value;ctx.shadowBlur=blur;ctx.shadowOffsetX=dx;ctx.shadowOffsetY=dy;
+   ctx.fillStyle=color;ctx.strokeStyle=outline;ctx.lineWidth=Math.max(2,size*.045);ctx.strokeText(text,480,300);ctx.fillText(text,480,300);
+  }else{
+   ctx.shadowBlur=0;ctx.shadowOffsetX=0;ctx.shadowOffsetY=0;
+   const shadowColor=shadowStudio.querySelector('#shadowColor').value;
+   if(mode==='3d'){
+    for(let i=depth;i>0;i-=Math.max(1,Math.ceil(depth/28))){ctx.fillStyle=shadowColor;ctx.fillText(text,480+dx*i/depth,300+dy*i/depth)}
+   }else if(mode==='perspective'){
+    const steps=24;
+    for(let i=steps;i>=1;i--){const t=i/steps;ctx.save();ctx.translate(480,300);ctx.transform(1+t*.75,0,-t*.18,1+t*.28,dx*t,dy*t);ctx.fillStyle=shadowColor;ctx.fillText(text,0,0);ctx.restore()}
+   }else if(mode==='panoramic'){
+    const steps=36;
+    for(let i=steps;i>=1;i--){const t=i/steps;ctx.save();ctx.translate(480,300);ctx.rotate((t-.5)*.48);ctx.scale(1+t*.28,1+t*.08);ctx.fillStyle=shadowColor;ctx.fillText(text,dx*t,dy*t);ctx.restore()}
+   }
+   ctx.lineWidth=Math.max(2,size*.045);ctx.strokeStyle=outline;ctx.fillStyle=color;ctx.strokeText(text,480,300);ctx.fillText(text,480,300);
+   if(blur>0){ctx.shadowColor=shadowColor;ctx.shadowBlur=blur;ctx.fillText(text,480,300)}
+  }
+  ctx.restore();renderLayers();if(typeof notify==='function')notify(mode+' shadow applied');
+ }));
  const font=document.getElementById('font');
  if(font){const f=document.createElement('div');f.className='field';f.innerHTML='<label for="font">Lettering font</label>';f.appendChild(font);textMenu.appendChild(f)}
  canvasPanel.insertBefore(toolbar,document.getElementById('canvasWrap'));
  const css=document.createElement('style');
  css.textContent=`
+ .shadow-studio{padding:10px;background:#ffffff08;border:1px solid var(--line);border-radius:10px}
+ .shadow-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .shadow-actions button{white-space:normal}
  .quick-toolbar{margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:#111719;position:relative;z-index:20}
  .quick-menu-bar{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
  .quick-menu{position:relative}
