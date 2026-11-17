@@ -116,6 +116,9 @@ button:focus-visible,.tool-details summary:focus-visible{outline:2px solid var(-
  .section-head{align-items:flex-start;flex-direction:column}
  .row.canvas-actions{grid-template-columns:minmax(0,1fr)}
 }
+
+#bgColor{width:100%;height:38px;padding:3px;border:1px solid var(--line);border-radius:9px;background:#111}
+#bgStyle,#bgTexture{width:100%;max-width:100%}
 </style>
 </head>
 <body>
@@ -147,7 +150,7 @@ button:focus-visible,.tool-details summary:focus-visible{outline:2px solid var(-
       <aside class="panel controls" id="toolPanel">
         <div class="field"><label for="words">Your lettering</label><input id="words" type="text" maxlength="22" value="WALLTALK" placeholder="Type your tag..."></div>
         <div class="field"><label>Creation mode</label><div class="tools"><button type="button" class="tool" data-tool="text">✦ Lettering</button><button type="button" class="tool" data-tool="spray">✺ Spray</button><button type="button" class="tool active" data-tool="draw">〰 Draw</button></div></div>
-        <div class="field"><label>Paint color</label><div class="row"><input type="color" id="color" value="#c7ff3d"><select id="font" aria-label="Graffiti lettering font"><option value="Bungee">Bungee · Block</option><option value="Permanent Marker">Permanent Marker · Handstyle</option><option value="Rubik Wet Paint">Wet Paint · Drippy</option><option value="Bangers">Bangers · Comic</option><option value="Black Ops One">Black Ops · Stencil</option><option value="Nosifer">Nosifer · Horror</option><option value="Impact">Impact · Bold</option><option value="Arial Black">Arial Black</option><option value="monospace">Mono</option></select></div><details class="tool-details"><summary>⌕ Find a graffiti font</summary><div class="tool-details-body"><input id="fontSearch" class="font-search" type="text" placeholder="Search bubble, wildstyle, 3D..." aria-label="Search Google Fonts by style"><div class="note">Search by style or font name, then choose a preview.</div><div id="googleFontResults" class="google-font-results" aria-live="polite"></div><div id="fontSearchStatus" class="search-status">Try bubble, marker, block, comic, stencil, drip or 3D.</div></div></details><details class="tool-details"><summary>＋ Saved style references</summary><div class="tool-details-body"><label class="btn secondary small" for="fontImageUpload" style="display:block;text-align:center;cursor:pointer">＋ Add style screenshot</label><input id="fontImageUpload" type="file" accept="image/*" class="hidden"><input id="fontRefName" type="text" maxlength="28" placeholder="Name this style reference (optional)" style="margin-top:8px"><div id="fontRefPreview" class="font-reference hidden"></div><div id="fontRefList" class="font-reference-list"></div></div></details></div>
+        <details class="tool-details" open><summary>▧ Canvas background</summary><div class="tool-details-body"><div class="field"><label for="bgColor">Background color</label><input id="bgColor" type="color" value="#252027"></div><div class="field"><label for="bgStyle">Background design</label><select id="bgStyle"><option value="plain">Plain color</option><option value="grid">Subtle grid</option><option value="dots">Spray dots</option><option value="brick">Brick wall</option><option value="concrete">Concrete texture</option></select></div><div class="field"><label for="bgTexture">Texture strength</label><input id="bgTexture" type="range" min="0" max="100" value="22"></div><button type="button" class="btn secondary small" id="applyBackground">Apply background</button></div></details><div class="field"><label>Paint color</label><div class="row"><input type="color" id="color" value="#c7ff3d"><select id="font" aria-label="Graffiti lettering font"><option value="Bungee">Bungee · Block</option><option value="Permanent Marker">Permanent Marker · Handstyle</option><option value="Rubik Wet Paint">Wet Paint · Drippy</option><option value="Bangers">Bangers · Comic</option><option value="Black Ops One">Black Ops · Stencil</option><option value="Nosifer">Nosifer · Horror</option><option value="Impact">Impact · Bold</option><option value="Arial Black">Arial Black</option><option value="monospace">Mono</option></select></div><details class="tool-details"><summary>⌕ Find a graffiti font</summary><div class="tool-details-body"><input id="fontSearch" class="font-search" type="text" placeholder="Search bubble, wildstyle, 3D..." aria-label="Search Google Fonts by style"><div class="note">Search by style or font name, then choose a preview.</div><div id="googleFontResults" class="google-font-results" aria-live="polite"></div><div id="fontSearchStatus" class="search-status">Try bubble, marker, block, comic, stencil, drip or 3D.</div></div></details><details class="tool-details"><summary>＋ Saved style references</summary><div class="tool-details-body"><label class="btn secondary small" for="fontImageUpload" style="display:block;text-align:center;cursor:pointer">＋ Add style screenshot</label><input id="fontImageUpload" type="file" accept="image/*" class="hidden"><input id="fontRefName" type="text" maxlength="28" placeholder="Name this style reference (optional)" style="margin-top:8px"><div id="fontRefPreview" class="font-reference hidden"></div><div id="fontRefList" class="font-reference-list"></div></div></details></div>
         <div class="field"><label for="size">Brush / letter size <span id="sizeVal">72</span></label><input type="range" id="size" min="8" max="150" value="72"></div>
         <div class="field"><label for="outline">Outline color</label><div class="row"><input type="color" id="outline" value="#ff4fa3"><button class="btn secondary small" id="background">Change wall</button></div></div>
         <div class="field"><label>Layers</label><div class="row"><button class="btn secondary small" id="addLayer">＋ Add layer</button><button class="btn secondary small" id="clearLayer">Clear active</button></div><div id="layerList" class="layer-list"></div><div class="note">Keep lettering, outlines, and paint on separate layers. Select a layer before drawing.</div></div>
@@ -404,33 +407,37 @@ renderFeed();renderProfile();renderLayerList();
 </script>
 
 
+
+
 <script>
 (function(){
- const surface=document.getElementById('art');
- if(!surface)return;
- let active=false,previous=null;
- function point(e){const r=surface.getBoundingClientRect();return{x:(e.clientX-r.left)*surface.width/r.width,y:(e.clientY-r.top)*surface.height/r.height}}
- function stop(e){e.preventDefault();e.stopImmediatePropagation()}
- surface.addEventListener('pointerdown',function(e){
-  stop(e);if(e.button!==undefined&&e.button!==0)return;
-  if(!ctx&&typeof activeLayer==='function'&&activeLayer())ctx=activeLayer().ctx;
-  if(!ctx)return;
-  active=true;previous=point(e);
-  try{surface.setPointerCapture(e.pointerId)}catch(err){}
-  if(tool==='text'){stampText(previous.x,previous.y);active=false;return}
-  snapshot();
-  if(tool==='spray')spray(previous.x,previous.y);
-  else{ctx.fillStyle=$('color').value;ctx.beginPath();ctx.arc(previous.x,previous.y,Math.max(2,+$('size').value/10),0,Math.PI*2);ctx.fill();renderLayers()}
- },true);
- surface.addEventListener('pointermove',function(e){
-  if(!active)return;stop(e);const p=point(e);
-  if(tool==='draw'){ctx.strokeStyle=$('color').value;ctx.lineWidth=Math.max(1,+$('size').value/5);ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(previous.x,previous.y);ctx.lineTo(p.x,p.y);ctx.stroke();renderLayers()}
-  else if(tool==='spray')spray(p.x,p.y);
-  previous=p;
- },true);
- function finish(e){if(!active)return;stop(e);active=false;previous=null}
- surface.addEventListener('pointerup',finish,true);
- surface.addEventListener('pointercancel',finish,true);
+ const color=document.getElementById('bgColor'),style=document.getElementById('bgStyle'),texture=document.getElementById('bgTexture'),apply=document.getElementById('applyBackground');
+ if(!color||!style||!texture||!apply)return;
+ const bgLayer=layers.find(l=>l.locked)||layers[0];
+ function paintBackground(){
+  if(!bgLayer)return;
+  const c=bgLayer.ctx,w=canvas.width,h=canvas.height,amount=Number(texture.value)/100;
+  c.clearRect(0,0,w,h);c.fillStyle=color.value;c.fillRect(0,0,w,h);
+  if(style.value==='grid'){
+   c.save();c.globalAlpha=.08+amount*.28;c.strokeStyle='#ffffff';c.lineWidth=1;
+   for(let x=0;x<w;x+=32){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke()}
+   for(let y=0;y<h;y+=32){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke()}c.restore();
+  }else if(style.value==='dots'){
+   c.save();c.fillStyle='#ffffff';c.globalAlpha=.08+amount*.3;
+   for(let y=10;y<h;y+=22)for(let x=10;x<w;x+=22){c.beginPath();c.arc(x,y,1+amount*2,0,Math.PI*2);c.fill()}c.restore();
+  }else if(style.value==='brick'){
+   c.save();c.globalAlpha=.14+amount*.42;c.strokeStyle='#e9d4c2';c.lineWidth=3;
+   const bh=42,bw=96;
+   for(let y=0,row=0;y<h;y+=bh,row++){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();let offset=row%2? -bw/2:0;for(let x=offset;x<w;x+=bw){c.beginPath();c.moveTo(x,y);c.lineTo(x,y+bh);c.stroke()}}
+   c.restore();
+  }else if(style.value==='concrete'){
+   c.save();c.globalAlpha=.04+amount*.18;
+   for(let i=0;i<2600*amount;i++){c.fillStyle=Math.random()>.5?'#ffffff':'#000000';let x=Math.random()*w,y=Math.random()*h,s=Math.random()*3+1;c.fillRect(x,y,s,s)}c.restore();
+  }
+  renderLayers();
+ }
+ apply.addEventListener('click',()=>{paintBackground();notify('Canvas background updated.')});
+ paintBackground();
 })();
 </script>
 
