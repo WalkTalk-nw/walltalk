@@ -119,7 +119,14 @@ button:focus-visible,.tool-details summary:focus-visible{outline:2px solid var(-
 
 #bgColor{width:100%;height:38px;padding:3px;border:1px solid var(--line);border-radius:9px;background:#111}
 #bgStyle,#bgTexture{width:100%;max-width:100%}
-.sticker-grid button{min-height:46px}.canvas-wrap canvas{touch-action:none;pointer-events:auto;user-select:none;-webkit-user-select:none}#bgColor{cursor:pointer}</style>
+.sticker-grid button{min-height:46px}.canvas-wrap canvas{touch-action:none;pointer-events:auto;user-select:none;-webkit-user-select:none}#bgColor{cursor:pointer}
+.object-editor{margin-top:12px;padding:11px;border:1px solid var(--line);border-radius:12px;background:#111719}
+.object-editor input[type=range]{width:100%;display:block;margin:6px 0 10px}
+.object-control{display:flex;align-items:center;gap:8px;font-size:12px}
+.object-control input{width:42px;height:30px;padding:2px}
+.object-editor .row{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:7px 0}
+.object-editor .row>*{min-width:0;flex:1}
+</style>
 </head>
 <body>
 <header>
@@ -153,7 +160,22 @@ button:focus-visible,.tool-details summary:focus-visible{outline:2px solid var(-
         <details class="tool-details" open><summary>▧ Canvas background</summary><div class="tool-details-body"><div class="field"><label for="bgColor">Background color</label><input id="bgColor" type="color" value="#252027"></div><div class="field"><label for="bgStyle">Background design</label><select id="bgStyle"><option value="plain">Plain color</option><option value="grid">Subtle grid</option><option value="dots">Spray dots</option><option value="brick">Brick wall</option><option value="concrete">Concrete texture</option></select></div><div class="field"><label for="bgTexture">Texture strength</label><input id="bgTexture" type="range" min="0" max="100" value="22"></div><button type="button" class="btn secondary small" id="applyBackground">Apply background</button></div></details><div class="field"><label>Paint color</label><div class="row"><input type="color" id="color" value="#c7ff3d"><select id="font" aria-label="Graffiti lettering font"><option value="Bungee">Bungee · Block</option><option value="Permanent Marker">Permanent Marker · Handstyle</option><option value="Rubik Wet Paint">Wet Paint · Drippy</option><option value="Bangers">Bangers · Comic</option><option value="Black Ops One">Black Ops · Stencil</option><option value="Nosifer">Nosifer · Horror</option><option value="Impact">Impact · Bold</option><option value="Arial Black">Arial Black</option><option value="monospace">Mono</option></select></div><details class="tool-details"><summary>⌕ Find a graffiti font</summary><div class="tool-details-body"><input id="fontSearch" class="font-search" type="text" placeholder="Search bubble, wildstyle, 3D..." aria-label="Search Google Fonts by style"><div class="note">Search by style or font name, then choose a preview.</div><div id="googleFontResults" class="google-font-results" aria-live="polite"></div><div id="fontSearchStatus" class="search-status">Try bubble, marker, block, comic, stencil, drip or 3D.</div></div></details><details class="tool-details"><summary>＋ Saved style references</summary><div class="tool-details-body"><label class="btn secondary small" for="fontImageUpload" style="display:block;text-align:center;cursor:pointer">＋ Add style screenshot</label><input id="fontImageUpload" type="file" accept="image/*" class="hidden"><input id="fontRefName" type="text" maxlength="28" placeholder="Name this style reference (optional)" style="margin-top:8px"><div id="fontRefPreview" class="font-reference hidden"></div><div id="fontRefList" class="font-reference-list"></div></div></details></div>
         <div class="field"><label for="size">Brush / letter size <span id="sizeVal">72</span></label><input type="range" id="size" min="8" max="150" value="72"></div>
         <div class="field"><label for="outline">Outline color</label><div class="row"><input type="color" id="outline" value="#ff4fa3"><button class="btn secondary small" id="background">Change wall</button></div></div>
-        <div class="field"><label>Layers</label><div class="row"><button class="btn secondary small" id="addLayer">＋ Add layer</button><button class="btn secondary small" id="clearLayer">Clear active</button></div><div id="layerList" class="layer-list"></div><div class="note">Keep lettering, outlines, and paint on separate layers. Select a layer before drawing.</div></div>
+        <div class="field"><label>Layers</label><div class="row"><button class="btn secondary small" id="addLayer">＋ Add layer</button><button class="btn secondary small" id="clearLayer">Clear active</button></div><div id="layerList" class="layer-list"></div>
+<div class="field object-editor" id="objectEditor">
+ <label>Selected artwork controls</label>
+ <div class="row">
+  <button type="button" class="btn secondary small" id="duplicateArtwork">⧉ Copy</button>
+  <button type="button" class="btn secondary small" id="deleteArtwork">× Delete</button>
+ </div>
+ <div class="row">
+  <label class="object-control">Color <input id="artworkColor" type="color" value="#c7ff3d"></label>
+  <button type="button" class="btn secondary small" id="recolorArtwork">Apply color</button>
+ </div>
+ <label for="artworkScale">Size</label><input id="artworkScale" type="range" min="25" max="200" value="100">
+ <label for="artworkRotate">Rotation</label><input id="artworkRotate" type="range" min="-180" max="180" value="0">
+ <div class="row"><button type="button" class="btn secondary small" id="transformArtwork">Apply shape</button><button type="button" class="btn secondary small" id="textureArtwork">Add texture</button></div>
+ <div class="note">These edits apply to the selected artwork layer. Keep separate drawings on separate layers to edit them independently.</div>
+</div><div class="note">Keep lettering, outlines, and paint on separate layers. Select a layer before drawing.</div></div>
         <div class="field"><label>Quick effects</label><div class="row"><button class="btn secondary small" id="drip">＋ Drip vibe</button><button class="btn secondary small" id="splatter">✺ Splatter</button></div><div class="row"><button class="btn secondary small" id="glow">✧ Neon glow</button><button class="btn secondary small" id="shadow">▰ 3D shadow</button></div></div>
         <button class="btn" id="addText">Place lettering on canvas</button>
         <div class="note">Draw is selected by default. Drag your finger or mouse across the canvas to paint. Choose Spray for misty dots, or Lettering to tap and place your words. Select a layer before painting to keep elements separate.</div>
@@ -431,6 +453,39 @@ renderFeed();renderProfile();renderLayerList();
  grid.style.cssText='display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:9px';
  stickers.forEach(symbol=>{const b=document.createElement('button');b.type='button';b.className='btn secondary small';b.textContent=symbol;b.style.fontSize='22px';b.addEventListener('click',()=>{let layer=activeLayer();if(!layer||layer.locked){layer=layers.find(l=>!l.locked);activeLayerId=layer.id;ctx=layer.ctx;renderLayerList()}snapshot();ctx.save();ctx.font=(Math.max(34,+$('size').value))+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(symbol,canvas.width/2,canvas.height/2);ctx.restore();renderLayers();notify('Sticker added to your canvas')});grid.append(b)});
  const panel=$('toolPanel');const bg=panel.querySelector('details.tool-details');if(bg)bg.after(stickerBox);
+})();
+</script>
+
+
+<script>
+(function(){
+ const $=id=>document.getElementById(id);
+ const host=$('objectEditor');if(!host)return;
+ function selected(){return layers.find(l=>l.id===activeLayerId&&!l.locked)||null}
+ function ready(){const l=selected();if(!l){notify('Select an artwork layer first.');return null}return l}
+ function refresh(l){ctx=l.ctx;renderLayers();renderLayerList();if(typeof snapshot==='function')snapshot()}
+ $('duplicateArtwork').addEventListener('click',()=>{
+  const src=ready();if(!src)return;
+  const copy=makeLayer(src.name+' copy');copy.ctx.drawImage(src.canvas,0,0);const at=layers.indexOf(src);layers.splice(at+1,0,copy);activeLayerId=copy.id;ctx=copy.ctx;renderLayers();renderLayerList();snapshot();notify('Artwork copied to a new layer.');
+ });
+ $('deleteArtwork').addEventListener('click',()=>{
+  const l=ready();if(!l)return;if(layers.filter(x=>!x.locked).length<=1){notify('Keep at least one artwork layer.');return}
+  layers=layers.filter(x=>x.id!==l.id);const next=layers.filter(x=>!x.locked).slice(-1)[0];activeLayerId=next.id;ctx=next.ctx;renderLayers();renderLayerList();snapshot();notify('Artwork layer deleted.');
+ });
+ $('recolorArtwork').addEventListener('click',()=>{
+  const l=ready();if(!l)return;const c=l.ctx;c.save();c.globalCompositeOperation='source-in';c.fillStyle=$('artworkColor').value;c.fillRect(0,0,canvas.width,canvas.height);c.restore();refresh(l);notify('Artwork color changed.');
+ });
+ $('transformArtwork').addEventListener('click',()=>{
+  const l=ready();if(!l)return;const scale=Number($('artworkScale').value)/100,angle=Number($('artworkRotate').value)*Math.PI/180;
+  const temp=document.createElement('canvas');temp.width=canvas.width;temp.height=canvas.height;const t=temp.getContext('2d');
+  t.translate(temp.width/2,temp.height/2);t.rotate(angle);t.scale(scale,scale);t.drawImage(l.canvas,-temp.width/2,-temp.height/2);
+  l.ctx.clearRect(0,0,canvas.width,canvas.height);l.ctx.drawImage(temp,0,0);$('artworkScale').value=100;$('artworkRotate').value=0;refresh(l);notify('Artwork shape transformed.');
+ });
+ $('textureArtwork').addEventListener('click',()=>{
+  const l=ready();if(!l)return;const c=l.ctx;c.save();c.globalCompositeOperation='source-atop';c.globalAlpha=.22;
+  for(let i=0;i<1800;i++){c.fillStyle=Math.random()>.5?'#ffffff':'#111111';const x=Math.random()*canvas.width,y=Math.random()*canvas.height;c.fillRect(x,y,Math.random()*3+1,Math.random()*3+1)}
+  c.restore();refresh(l);notify('Texture added to artwork.');
+ });
 })();
 </script>
 
