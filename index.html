@@ -604,7 +604,7 @@ renderFeed();renderProfile();renderLayerList();
  const toolsMenu=makeMenu('Tools','quickMenuTools');
  const textMenu=makeMenu('Text','quickMenuText');
  const colorsMenu=makeMenu('Colors','quickMenuColors');
- const canvasMenu=makeMenu('Canvas','quickMenuCanvas');
+ const canvasMenu=makeMenu('Background','quickMenuBackground');
  const brushMenu=makeMenu('Brush & Effects','quickMenuBrush');
  const editMenu=makeMenu('Edit','quickMenuEdit');
  const viewMenu=makeMenu('View','quickMenuView');
@@ -631,20 +631,29 @@ renderFeed();renderProfile();renderLayerList();
  if(modes)toolsMenu.appendChild(modes);
  put('words',textMenu);
  const addText=document.getElementById('addText');if(addText){const w=document.createElement('div');w.className='quick-menu-action';w.appendChild(addText);textMenu.appendChild(w)}
- const colorField=put('color',colorsMenu);
- if(colorField){const label=colorField.querySelector('label');if(label)label.textContent='Text / paint color'}
+ const paintColor=put('color',colorsMenu);
+ if(paintColor){const label=paintColor.querySelector('label');if(label)label.textContent='Paint color'}
+ const outline=put('outline',colorsMenu);
  const bg=panel.querySelector('details.tool-details');
  if(bg)canvasMenu.appendChild(bg);
  const size=put('size',brushMenu);
- const outline=put('outline',colorsMenu);
+ const sprayCap=put('sprayCap',brushMenu);
+ if(sprayCap)sprayCap.id='sprayCapField';
+ const sprayField=document.getElementById('sprayCapField');
+ if(sprayField){
+  sprayField.hidden=true;
+  const updateSprayCap=()=>{sprayField.hidden=document.querySelector('[data-tool="spray"]')?.classList.contains('active')!==true};
+  panel.querySelectorAll('[data-tool]').forEach(button=>button.addEventListener('click',updateSprayCap));
+  updateSprayCap();
+ }
  const effects=[...panel.querySelectorAll('.field')].find(x=>x.textContent.includes('Quick effects'));
  if(effects)brushMenu.appendChild(effects);
  const font=document.getElementById('font');
  if(font){const f=document.createElement('div');f.className='field';f.innerHTML='<label for="font">Lettering font</label>';f.appendChild(font);textMenu.appendChild(f)}
- canvasPanel.appendChild(toolbar);
+ canvasPanel.insertBefore(toolbar,document.getElementById('canvasWrap'));
  const css=document.createElement('style');
  css.textContent=`
- .quick-toolbar{margin-top:10px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:#111719;position:relative;z-index:20}
+ .quick-toolbar{margin:0 0 10px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:#111719;position:relative;z-index:20}
  .quick-menu-bar{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
  .quick-menu{position:relative}
  .quick-menu>summary{list-style:none;cursor:pointer;user-select:none;padding:9px 12px;border-radius:8px;color:var(--text);font-size:13px;font-weight:600;white-space:nowrap}
