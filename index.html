@@ -276,5 +276,66 @@ function renderProfile(){let profile=getProfile(),name=profile.name||'';$('profi
 $('saveProfile').onclick=()=>{let name=$('profileName').value.trim().replace(/^@/,'');let bio=$('profileBio').value.trim();try{localStorage.setItem('walltalk_profile',JSON.stringify({name,bio}));notify('Your local profile was saved.');renderProfile()}catch{notify('Could not save profile in this browser.')}};
 renderFeed();renderProfile();renderLayerList();
 </script>
+
+<script>
+(function(){
+ const input=document.getElementById('fontSearch'),results=document.getElementById('googleFontResults'),status=document.getElementById('fontSearchStatus'),fontSelect=document.getElementById('font');
+ if(!input||!results||!status||!fontSelect)return;
+ const fonts=[
+  ['Bungee','Block / bubble','block chunky urban bold'],
+  ['Bowlby One SC','Heavy bubble','bubble chunky rounded heavy'],
+  ['Bowlby One','Chunky rounded','bubble chunky rounded bold'],
+  ['Righteous','Rounded bubble','bubble rounded smooth retro'],
+  ['Bungee Shade','3D block','3d shadow dimensional block'],
+  ['Permanent Marker','Marker handstyle','marker handwritten tag handstyle'],
+  ['Rubik Wet Paint','Drip paint','drip wet paint liquid'],
+  ['Bangers','Comic lettering','comic cartoon pop bold'],
+  ['Black Ops One','Stencil','stencil industrial block'],
+  ['Nosifer','Dripping horror','drip horror melting'],
+  ['Monoton','Neon outline','neon outline retro 3d'],
+  ['Knewave','Brush lettering','brush paint graffiti'],
+  ['Rock Salt','Rough handstyle','rough handwritten marker tag'],
+  ['Rubik Dirt','Distressed','distressed rough grunge'],
+  ['Racing Sans One','Speed lettering','speed italic racing street']
+ ];
+ function search(){
+  const q=input.value.trim().toLowerCase();
+  results.replaceChildren();
+  const words=q.split(/\s+/).filter(Boolean);
+  const aliases={letters:'bubble',lettering:'graffiti',style:'graffiti',styles:'graffiti',graffiti:'graffiti',wildstyle:'graffiti','throw-up':'bubble',rounded:'bubble',chunky:'bubble',font:'',fonts:''};
+  const terms=words.map(w=>aliases[w]===undefined?w:aliases[w]).filter(Boolean);
+  let matches=fonts.filter(f=>{
+   const hay=(f[0]+' '+f[1]+' '+f[2]).toLowerCase();
+   if(!terms.length)return true;
+   if(terms.includes('graffiti'))return /block|bubble|marker|paint|brush|handstyle|chunky/i.test(hay);
+   if(terms.includes('bubble'))return /bubble|chunky|rounded|block|bold/i.test(hay);
+   if(terms.includes('3d'))return /3d|shadow|dimensional|neon|outline/i.test(hay);
+   return terms.every(t=>hay.includes(t));
+  });
+  status.textContent=matches.length?matches.length+' font options found — choose USE FONT.':'No exact match. Try bubble, marker, block, drip, stencil, comic or 3D.';
+  matches.forEach(f=>{
+   const card=document.createElement('div');card.className='google-font-card';
+   const left=document.createElement('span'),sample=document.createElement('span'),meta=document.createElement('span'),use=document.createElement('button');
+   sample.className='sample';sample.textContent='WALLTALK';sample.style.fontFamily='"'+f[0]+'",sans-serif';
+   meta.className='meta';meta.textContent=f[0]+' · '+f[1];
+   left.append(sample,meta);use.type='button';use.className='use';use.textContent='USE FONT';
+   use.addEventListener('click',()=>{
+    const id='wt-font-'+f[0].replace(/[^a-z0-9]/gi,'-');
+    if(!document.getElementById(id)){const link=document.createElement('link');link.id=id;link.rel='stylesheet';link.href='https://fonts.googleapis.com/css2?family='+encodeURIComponent(f[0]).replace(/%20/g,'+')+'&display=swap';document.head.append(link)}
+    let option=Array.from(fontSelect.options).find(o=>o.value===f[0]);
+    if(!option){option=document.createElement('option');option.value=f[0];option.textContent=f[0]+' · Google Fonts';fontSelect.add(option)}
+    fontSelect.value=f[0];fontSelect.dispatchEvent(new Event('change',{bubbles:true}));
+    status.textContent=f[0]+' selected. Type your words and place them on the canvas.';
+   });
+   card.append(left,use);results.append(card);
+   const id='wt-font-'+f[0].replace(/[^a-z0-9]/gi,'-');
+   if(!document.getElementById(id)){const link=document.createElement('link');link.id=id;link.rel='stylesheet';link.href='https://fonts.googleapis.com/css2?family='+encodeURIComponent(f[0]).replace(/%20/g,'+')+'&display=swap';document.head.append(link)}
+  });
+ }
+ input.addEventListener('input',search);
+ search();
+})();
+</script>
+
 </body>
 </html>
