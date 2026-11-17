@@ -566,6 +566,10 @@ renderFeed();renderProfile();renderLayerList();
  const editMenu=makeMenu('Edit','quickMenuEdit');
  const viewMenu=makeMenu('View','quickMenuView');
  const exportMenu=makeMenu('Export','quickMenuExport');
+ const stickerMenu=makeMenu('Stickers','quickMenuStickers');
+ const stickerPanel=[...panel.querySelectorAll('details')].find(d=>d.textContent.includes('Stickers & wall designs'));
+ if(stickerPanel)stickerMenu.appendChild(stickerPanel);
+
  const moveButton=(id,target)=>{const el=document.getElementById(id);if(el){target.appendChild(el);return el}return null};
  const actionGroup=(target,label,ids)=>{const group=document.createElement('div');group.className='quick-menu-actions';const title=document.createElement('div');title.className='quick-menu-label';title.textContent=label;group.appendChild(title);ids.forEach(id=>moveButton(id,group));target.appendChild(group)};
  actionGroup(editMenu,'History & cleanup',['undo','clear','clearLayer']);
