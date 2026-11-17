@@ -126,6 +126,10 @@ button:focus-visible,.tool-details summary:focus-visible{outline:2px solid var(-
 .object-control input{width:42px;height:30px;padding:2px}
 .object-editor .row{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:7px 0}
 .object-editor .row>*{min-width:0;flex:1}
+
+#art.selector-active{cursor:default}
+.selection-hud{font-size:11px;color:var(--muted);margin-top:7px}
+#selectorTool[aria-pressed=true]{border-color:var(--lime);color:var(--lime);background:#c7ff3d16}
 </style>
 </head>
 <body>
@@ -156,7 +160,7 @@ button:focus-visible,.tool-details summary:focus-visible{outline:2px solid var(-
       </div>
       <aside class="panel controls" id="toolPanel">
         <div class="field"><label for="words">Your lettering</label><input id="words" type="text" maxlength="22" value="WALLTALK" placeholder="Type your tag..."></div>
-        <div class="field"><label>Creation mode</label><div class="tools"><button type="button" class="tool" data-tool="text">✦ Lettering</button><button type="button" class="tool" data-tool="spray">✺ Spray</button><button type="button" class="tool active" data-tool="draw">〰 Draw</button></div></div>
+        <div class="field"><label>Creation mode</label><div class="tools"><button type="button" class="tool" id="selectorTool" aria-pressed="false">↖ Select</button><button type="button" class="tool" data-tool="text">✦ Lettering</button><button type="button" class="tool" data-tool="spray">✺ Spray</button><button type="button" class="tool active" data-tool="draw">〰 Draw</button></div></div>
         <details class="tool-details" open><summary>▧ Canvas background</summary><div class="tool-details-body"><div class="field"><label for="bgColor">Background color</label><input id="bgColor" type="color" value="#252027"></div><div class="field"><label for="bgStyle">Background design</label><select id="bgStyle"><option value="plain">Plain color</option><option value="grid">Subtle grid</option><option value="dots">Spray dots</option><option value="brick">Brick wall</option><option value="concrete">Concrete texture</option></select></div><div class="field"><label for="bgTexture">Texture strength</label><input id="bgTexture" type="range" min="0" max="100" value="22"></div><button type="button" class="btn secondary small" id="applyBackground">Apply background</button></div></details><div class="field"><label>Paint color</label><div class="row"><input type="color" id="color" value="#c7ff3d"><select id="font" aria-label="Graffiti lettering font"><option value="Bungee">Bungee · Block</option><option value="Permanent Marker">Permanent Marker · Handstyle</option><option value="Rubik Wet Paint">Wet Paint · Drippy</option><option value="Bangers">Bangers · Comic</option><option value="Black Ops One">Black Ops · Stencil</option><option value="Nosifer">Nosifer · Horror</option><option value="Impact">Impact · Bold</option><option value="Arial Black">Arial Black</option><option value="monospace">Mono</option></select></div><details class="tool-details"><summary>⌕ Find a graffiti font</summary><div class="tool-details-body"><input id="fontSearch" class="font-search" type="text" placeholder="Search bubble, wildstyle, 3D..." aria-label="Search Google Fonts by style"><div class="note">Search by style or font name, then choose a preview.</div><div id="googleFontResults" class="google-font-results" aria-live="polite"></div><div id="fontSearchStatus" class="search-status">Try bubble, marker, block, comic, stencil, drip or 3D.</div></div></details><details class="tool-details"><summary>＋ Saved style references</summary><div class="tool-details-body"><label class="btn secondary small" for="fontImageUpload" style="display:block;text-align:center;cursor:pointer">＋ Add style screenshot</label><input id="fontImageUpload" type="file" accept="image/*" class="hidden"><input id="fontRefName" type="text" maxlength="28" placeholder="Name this style reference (optional)" style="margin-top:8px"><div id="fontRefPreview" class="font-reference hidden"></div><div id="fontRefList" class="font-reference-list"></div></div></details></div>
         <div class="field"><label for="size">Brush / letter size <span id="sizeVal">72</span></label><input type="range" id="size" min="8" max="150" value="72"></div>
         <div class="field"><label for="outline">Outline color</label><div class="row"><input type="color" id="outline" value="#ff4fa3"><button class="btn secondary small" id="background">Change wall</button></div></div>
@@ -489,5 +493,58 @@ renderFeed();renderProfile();renderLayerList();
 })();
 </script>
 
+
+<script>
+(function(){
+ const canvas=document.getElementById('art'),button=document.getElementById('selectorTool');
+ if(!canvas||!button)return;
+ let selected=null,box=null,drag=null,mode='move',start=null,original=null;
+ const hud=document.createElement('div');hud.className='selection-hud';hud.textContent='Select to move artwork. Drag corner to resize or the top handle to rotate.';button.parentElement.after(hud);
+ const xy=e=>{const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height}};
+ function bounds(layer){
+  const w=layer.canvas.width,h=layer.canvas.height,d=layer.ctx.getImageData(0,0,w,h).data;
+  let x0=w,y0=h,x1=-1,y1=-1;
+  for(let y=0;y<h;y+=2)for(let x=0;x<w;x+=2)if(d[(y*w+x)*4+3]>12){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)}
+  return x1<0?null:{x:x0,y:y0,w:x1-x0+2,h:y1-y0+2};
+ }
+ function drawBox(){
+  renderLayers();if(!selected||!box)return;
+  displayCtx.save();displayCtx.setLineDash([7,4]);displayCtx.strokeStyle='#c7ff3d';displayCtx.lineWidth=2;displayCtx.strokeRect(box.x,box.y,box.w,box.h);displayCtx.setLineDash([]);
+  const handles=[[box.x,box.y],[box.x+box.w,box.y],[box.x,box.y+box.h],[box.x+box.w,box.y+box.h],[box.x+box.w/2,box.y-24]];
+  handles.forEach((p,i)=>{displayCtx.beginPath();displayCtx.fillStyle=i===4?'#ffcf5a':'#c7ff3d';displayCtx.arc(p[0],p[1],6,0,Math.PI*2);displayCtx.fill();displayCtx.strokeStyle='#101010';displayCtx.stroke()});displayCtx.restore();
+ }
+ function setMode(on){button.setAttribute('aria-pressed',String(on));button.classList.toggle('active',on);canvas.classList.toggle('selector-active',on);if(on){tool='select';document.querySelectorAll('.tools [data-tool]').forEach(b=>b.classList.remove('active'));hud.textContent='Click artwork to select. Drag inside to move; drag a corner to resize; drag the top handle to rotate.'}else{if(tool==='select')tool='draw';hud.textContent='Select to move artwork. Drag corner to resize or the top handle to rotate.';selected=null;box=null;renderLayers()}}
+ button.addEventListener('click',()=>setMode(button.getAttribute('aria-pressed')!=='true'));
+ document.querySelectorAll('.tools [data-tool]').forEach(b=>b.addEventListener('click',()=>setMode(false)));
+ function transform(layer,fn){const temp=document.createElement('canvas');temp.width=canvas.width;temp.height=canvas.height;temp.getContext('2d').drawImage(layer.canvas,0,0);layer.ctx.clearRect(0,0,canvas.width,canvas.height);fn(layer.ctx,temp);box=bounds(layer);drawBox()}
+ canvas.addEventListener('pointerdown',e=>{
+  if(button.getAttribute('aria-pressed')!=='true')return;
+  e.preventDefault();e.stopImmediatePropagation();const p=xy(e);
+  if(!selected||!box||p.x<box.x-10||p.x>box.x+box.w+10||p.y<box.y-35||p.y>box.y+box.h+10){
+   const candidates=layers.filter(l=>!l.locked&&l.visible).reverse();selected=null;box=null;
+   for(const l of candidates){const b=bounds(l);if(b&&p.x>=b.x&&p.x<=b.x+b.w&&p.y>=b.y&&p.y<=b.y+b.h){selected=l;box=b;activeLayerId=l.id;ctx=l.ctx;renderLayerList();break}}
+   if(!selected){drawBox();hud.textContent='No artwork at that spot. Click a painted area to select it.';return}
+  }
+  const cx=box.x+box.w/2,cy=box.y+box.h/2;
+  if(Math.hypot(p.x-cx,p.y-(box.y-24))<13)mode='rotate';
+  else if(Math.hypot(p.x-(box.x+box.w),p.y-(box.y+box.h))<14)mode='resize';
+  else mode='move';
+  start=p;original={box:{...box},cx,cy};snapshot();canvas.setPointerCapture(e.pointerId);drawBox();
+ },true);
+ canvas.addEventListener('pointermove',e=>{
+  if(button.getAttribute('aria-pressed')!=='true'||!start||!selected)return;
+  e.preventDefault();e.stopImmediatePropagation();const p=xy(e),b=original.box,dx=p.x-start.x,dy=p.y-start.y;
+  transform(selected,(c,temp)=>{
+   if(mode==='move')c.drawImage(temp,dx,dy);
+   else if(mode==='resize'){const sx=Math.max(.1,(b.w+dx)/b.w),sy=Math.max(.1,(b.h+dy)/b.h);c.translate(b.x,b.y);c.scale(sx,sy);c.drawImage(temp,-b.x,-b.y)}
+   else{const angle=Math.atan2(p.y-original.cy,p.x-original.cx)-Math.atan2(start.y-original.cy,start.x-original.cx);c.translate(original.cx,original.cy);c.rotate(angle);c.drawImage(temp,-original.cx,-original.cy)}
+  });
+ },true);
+ function finish(e){if(!start)return; e.stopImmediatePropagation();start=null;original=null;if(selected){box=bounds(selected);drawBox();notify('Artwork adjusted.')}}
+ canvas.addEventListener('pointerup',finish,true);canvas.addEventListener('pointercancel',finish,true);
+ const observer=new MutationObserver(()=>{if(button.getAttribute('aria-pressed')==='true'&&selected&&layers.includes(selected)){box=bounds(selected);drawBox()}});
+ const layerHost=document.getElementById('layerList');if(layerHost)observer.observe(layerHost,{childList:true,subtree:true});
+})();
+</script>
 </body>
 </html>
