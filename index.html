@@ -552,45 +552,55 @@ renderFeed();renderProfile();renderLayerList();
  const panel=document.getElementById('toolPanel');
  const canvasPanel=document.getElementById('canvasWrap')?.parentElement;
  if(!panel||!canvasPanel||document.getElementById('quickToolbar'))return;
- const toolbar=document.createElement('section');
+ const toolbar=document.createElement('nav');
  toolbar.id='quickToolbar';toolbar.className='quick-toolbar';
- toolbar.innerHTML='<div class="quick-toolbar-head"><strong>Quick controls</strong><span>Tools for your canvas</span></div><div class="quick-toolbar-grid"></div>';
- const grid=toolbar.querySelector('.quick-toolbar-grid');
- const move=(el)=>{if(el)grid.appendChild(el)};
- const words=document.getElementById('words')?.closest('.field');
- const modes=panel.querySelector('.tools')?.closest('.field');
+ toolbar.setAttribute('aria-label','Canvas controls menu');
+ toolbar.innerHTML='<div class="quick-menu-bar"></div>';
+ const bar=toolbar.querySelector('.quick-menu-bar');
+ const makeMenu=(label,id)=>{const d=document.createElement('details');d.className='quick-menu';d.id=id;const s=document.createElement('summary');s.textContent=label;s.setAttribute('aria-label',label+' menu');const body=document.createElement('div');body.className='quick-menu-panel';d.append(s,body);bar.append(d);return body};
+ const toolsMenu=makeMenu('Tools','quickMenuTools');
+ const textMenu=makeMenu('Text','quickMenuText');
+ const colorsMenu=makeMenu('Colors','quickMenuColors');
+ const canvasMenu=makeMenu('Canvas','quickMenuCanvas');
+ const brushMenu=makeMenu('Brush & Effects','quickMenuBrush');
+ const put=(id,target)=>{const el=document.getElementById(id);if(el){const field=el.closest('.field')||el;target.appendChild(field);return field}return null};
+ const modes=panel.querySelector('.tools')?.closest('.field')||panel.querySelector('.tools');
+ if(modes)toolsMenu.appendChild(modes);
+ put('words',textMenu);
+ const addText=document.getElementById('addText');if(addText){const w=document.createElement('div');w.className='quick-menu-action';w.appendChild(addText);textMenu.appendChild(w)}
+ const colorField=put('color',colorsMenu);
+ if(colorField){const label=colorField.querySelector('label');if(label)label.textContent='Text / paint color'}
  const bg=panel.querySelector('details.tool-details');
- const color=document.getElementById('color');
- const colorField=color?.closest('.field');
+ if(bg)canvasMenu.appendChild(bg);
+ const size=put('size',brushMenu);
+ const outline=put('outline',colorsMenu);
+ const effects=[...panel.querySelectorAll('.field')].find(x=>x.textContent.includes('Quick effects'));
+ if(effects)brushMenu.appendChild(effects);
  const font=document.getElementById('font');
- const fontRow=font?.parentElement;
- if(font&&fontRow){const fontField=document.createElement('div');fontField.className='field';fontField.innerHTML='<label for="font">Lettering font</label>';fontField.appendChild(font);panel.insertBefore(fontField,panel.querySelector('.field:has(#size)'));}
- if(color&&colorField){colorField.querySelector('label')?.remove();const row=colorField.querySelector('.row');if(row){row.insertBefore(color, row.firstChild);row.querySelector('#font')?.remove();}colorField.querySelector('details')?.remove();move(colorField);}
- move(words);move(modes);move(bg);
- const size=document.getElementById('size')?.closest('.field');move(size);
- const outline=document.getElementById('outline')?.closest('.field');move(outline);
- const effects=[...panel.querySelectorAll('.field')].find(x=>x.textContent.includes('Quick effects'));move(effects);
- const addText=document.getElementById('addText');if(addText){const wrap=document.createElement('div');wrap.className='quick-toolbar-action';wrap.append(addText);grid.append(wrap);}
+ if(font){const f=document.createElement('div');f.className='field';f.innerHTML='<label for="font">Lettering font</label>';f.appendChild(font);textMenu.appendChild(f)}
  canvasPanel.appendChild(toolbar);
- const fontSearch=panel.querySelector('details.tool-details');if(fontSearch)fontSearch.open=false;
- const bgSummary=bg?.querySelector('summary');if(bgSummary)bgSummary.textContent='▧ Background';
  const css=document.createElement('style');
  css.textContent=`
- .quick-toolbar{margin-top:12px;padding:13px;border:1px solid var(--line);border-radius:14px;background:#111719}
- .quick-toolbar-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px}
- .quick-toolbar-head strong{font-size:13px;color:var(--lime);letter-spacing:.06em;text-transform:uppercase}
- .quick-toolbar-head span{font-size:11px;color:var(--muted)}
- .quick-toolbar-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;align-items:start}
- .quick-toolbar-grid>.field{min-width:0;margin:0;padding:9px;border-radius:10px;background:#ffffff08}
- .quick-toolbar-grid input,.quick-toolbar-grid select{max-width:100%;min-width:0}
- .quick-toolbar-grid input[type=range]{width:100%}
- .quick-toolbar-grid .row{flex-wrap:wrap}
- .quick-toolbar-action{grid-column:1/-1}
- .quick-toolbar-action button{width:100%}
- @media(max-width:760px){.quick-toolbar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
- @media(max-width:420px){.quick-toolbar{padding:10px}.quick-toolbar-grid{grid-template-columns:minmax(0,1fr)}.quick-toolbar-head{align-items:flex-start;flex-direction:column}}
+ .quick-toolbar{margin-top:10px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:#111719;position:relative;z-index:20}
+ .quick-menu-bar{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+ .quick-menu{position:relative}
+ .quick-menu>summary{list-style:none;cursor:pointer;user-select:none;padding:9px 12px;border-radius:8px;color:var(--text);font-size:13px;font-weight:600;white-space:nowrap}
+ .quick-menu>summary::-webkit-details-marker{display:none}
+ .quick-menu>summary:after{content:' ▾';font-size:10px;color:var(--muted)}
+ .quick-menu[open]>summary,.quick-menu>summary:hover{background:#ffffff12;color:var(--lime)}
+ .quick-menu-panel{position:absolute;left:0;top:calc(100% + 6px);min-width:230px;max-width:min(330px,calc(100vw - 30px));max-height:min(65vh,480px);overflow:auto;padding:12px;background:#171f21;border:1px solid var(--line);border-radius:11px;box-shadow:0 12px 32px #0009;display:grid;gap:10px;z-index:100}
+ .quick-menu-panel>.field{min-width:0;margin:0;padding:8px;border-radius:8px;background:#ffffff08}
+ .quick-menu-panel input,.quick-menu-panel select,.quick-menu-panel textarea{max-width:100%;min-width:0}
+ .quick-menu-panel input[type=range]{width:100%}
+ .quick-menu-panel .row{flex-wrap:wrap}
+ .quick-menu-panel details{position:relative}
+ .quick-menu-action button{width:100%}
+ .quick-menu:focus-within>summary{outline:2px solid var(--lime);outline-offset:2px}
+ @media(max-width:600px){.quick-menu-bar{gap:2px}.quick-menu>summary{padding:9px 8px;font-size:12px}.quick-menu-panel{position:fixed;left:12px;right:12px;top:auto;min-width:0;max-width:none;max-height:55vh}}
  `;
  document.head.appendChild(css);
+ document.addEventListener('click',e=>{if(!e.target.closest('.quick-menu'))toolbar.querySelectorAll('.quick-menu[open]').forEach(d=>d.open=false)});
+ toolbar.querySelectorAll('.quick-menu').forEach(menu=>menu.addEventListener('toggle',()=>{if(menu.open)toolbar.querySelectorAll('.quick-menu').forEach(other=>{if(other!==menu)other.open=false})}));
 })();
 </script>
 </body>
