@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WALLTALK — Make your mark</title>
+<style>
+:root{--bg:#090a0d;--panel:#12151b;--panel2:#191e26;--line:#2b323d;--muted:#9aa4b2;--text:#f4f6f8;--lime:#c7ff3d;--pink:#ff4fa3;--cyan:#46e6ef}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% -10%,#222b35 0,transparent 38%),var(--bg);color:var(--text);font:15px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer}
+header{height:72px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 clamp(16px,4vw,54px);position:sticky;top:0;background:#090a0deF;backdrop-filter:blur(14px);z-index:5}
+.logo{font-weight:1000;letter-spacing:-1.8px;font-size:27px}.logo span{color:var(--lime)}.tagline{color:var(--muted);font-size:11px;letter-spacing:2px;text-transform:uppercase;margin-left:12px}
+nav{display:flex;gap:8px}nav button,.ghost{background:transparent;color:var(--muted);border:1px solid transparent;padding:9px 13px;border-radius:10px}nav button.active,nav button:hover,.ghost:hover{color:var(--text);border-color:var(--line);background:var(--panel)}
+.wrap{max-width:1200px;margin:auto;padding:28px clamp(14px,3vw,36px) 60px}
+.hero{display:flex;align-items:end;justify-content:space-between;gap:20px;margin:10px 0 25px}.eyebrow{color:var(--lime);font-size:11px;font-weight:800;letter-spacing:2.4px;text-transform:uppercase}
+h1{font-size:clamp(34px,6vw,62px);line-height:.98;letter-spacing:-3px;margin:8px 0 12px}.hero p{color:var(--muted);max-width:560px;margin:0}.stamp{border:1px solid #48513a;color:var(--lime);padding:9px 12px;border-radius:8px;font-size:11px;letter-spacing:1px;white-space:nowrap;transform:rotate(-3deg)}
+.tabs{display:flex;gap:8px;border-bottom:1px solid var(--line);margin-bottom:22px}.tab{padding:12px 16px;background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font-weight:750}.tab.active{color:var(--lime);border-color:var(--lime)}
+.panel{background:linear-gradient(145deg,#171b22,#101319);border:1px solid var(--line);border-radius:17px;padding:18px;box-shadow:0 18px 55px #0005}
+.editor-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(260px,.8fr);gap:18px}
+.canvas-wrap{background:#08090b;border:1px solid #333b46;border-radius:12px;overflow:hidden;position:relative}
+canvas{display:block;width:100%;height:auto;aspect-ratio:16/10;touch-action:none;cursor:crosshair;transform-origin:center center;will-change:transform}
+.canvas-wrap{touch-action:none}
+.canvas-wrap.fullscreen{position:fixed;inset:12px;z-index:30;border:2px solid var(--lime);background:#08090b;display:flex;align-items:center;justify-content:center;border-radius:12px;box-shadow:0 0 0 100vmax #000e}
+.canvas-wrap.fullscreen canvas{width:min(100%, calc((100vh - 70px) * 1.6));max-height:calc(100vh - 70px);height:auto}
+.canvas-wrap.fullscreen .canvas-label{z-index:2}
+#toolPanel.collapsed{display:none}
+.layer-list{display:grid;gap:6px;margin-top:8px}
+.layer-row{display:flex;gap:6px;align-items:center;background:#0b0e13;border:1px solid var(--line);border-radius:8px;padding:5px}
+.layer-row.selected{border-color:var(--lime);background:#18200f}
+.layer-select{flex:1;min-width:0;text-align:left;background:transparent;border:0;color:var(--text);padding:6px;font-size:12px;font-weight:750;overflow:hidden;text-overflow:ellipsis}
+.layer-mini{width:30px;height:30px;border-radius:6px;border:1px solid var(--line);background:#202630;color:var(--text)}
+.layer-mini:disabled{opacity:.3}
+body.fullscreen-open{overflow:hidden}
+@media(max-width:800px){.canvas-wrap.fullscreen{inset:6px}.canvas-wrap.fullscreen canvas{width:100%;max-height:calc(100vh - 28px)}.canvas-actions{flex-wrap:wrap}.canvas-actions button{flex:1 1 auto}}
+.canvas-label{position:absolute;left:12px;top:10px;color:#aab2bd;background:#08090bc9;padding:5px 8px;border-radius:5px;font-size:10px;letter-spacing:1.5px;pointer-events:none}
+.controls{display:grid;gap:14px}.field{display:grid;gap:7px}.field label,.field-title{font-size:11px;text-transform:uppercase;letter-spacing:1.4px;color:#aeb7c3;font-weight:800}
+input[type=text],textarea,select{width:100%;background:#0b0e13;border:1px solid var(--line);border-radius:9px;padding:11px;color:var(--text);outline:none}input:focus,textarea:focus,select:focus{border-color:var(--lime)}
+textarea{resize:vertical;min-height:72px}.row{display:flex;gap:8px;align-items:center}.row>*{flex:1;min-width:0}
+input[type=color]{width:42px;height:38px;padding:3px;border:1px solid var(--line);background:#0b0e13;border-radius:8px}
+input[type=range]{width:100%;accent-color:var(--lime)}
+.btn{border:0;border-radius:9px;padding:11px 14px;background:var(--lime);color:#11150a;font-weight:900}.btn:hover{filter:brightness(1.08);transform:translateY(-1px)}.btn.secondary{background:#252d38;color:var(--text);border:1px solid #394352}.btn.pink{background:var(--pink);color:#180813}.btn.small{padding:8px 10px;font-size:12px}
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.tool{padding:10px 5px;background:#0c1016;color:#b7c0cc;border:1px solid var(--line);border-radius:8px;font-size:12px;font-weight:800}.tool.active{border-color:var(--lime);color:var(--lime);background:#1c2510}
+.note{font-size:11px;color:var(--muted)}.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:28px 0 14px}.section-head h2{font-size:22px;margin:0;letter-spacing:-.7px}.section-head span{color:var(--muted);font-size:12px}
+.feed{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px}.post{overflow:hidden;padding:0}.art{width:100%;aspect-ratio:4/3;display:block;background:#08090b}.post-body{padding:14px}.post-top{display:flex;justify-content:space-between;gap:8px;align-items:center}.handle{font-weight:850}.time{font-size:11px;color:var(--muted)}.caption{color:#c1c8d1;margin:8px 0 12px;font-size:13px}.post-actions{display:flex;gap:8px}.post-actions button{flex:1;background:#202630;border:1px solid #303946;color:#dbe1e8;border-radius:8px;padding:8px;font-size:12px}.post-actions button:hover{border-color:var(--lime)}
+.empty{padding:30px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:12px;grid-column:1/-1}
+footer{border-top:1px solid var(--line);margin-top:35px;padding-top:17px;color:#7f8997;font-size:11px;display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}
+.hidden{display:none!important}.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--lime);color:#111;padding:10px 16px;border-radius:9px;font-weight:800;box-shadow:0 8px 30px #0008;z-index:20}
+@media(max-width:800px){.editor-grid{grid-template-columns:1fr}.feed{grid-template-columns:repeat(2,minmax(0,1fr))}.hero{align-items:start;flex-direction:column}.stamp{display:none}}
+@media(max-width:520px){header{height:auto;min-height:64px;flex-wrap:wrap;padding-top:10px;padding-bottom:10px}.tagline{display:none}nav button{padding:8px;font-size:12px}.feed{grid-template-columns:1fr}.wrap{padding-top:18px}.panel{padding:12px}}
+</style>
+</head>
+<body>
+<header>
+  <div><span class="logo">WALL<span>TALK</span></span><span class="tagline">Make your mark</span></div>
+  <nav><button class="active" data-page="studio">Studio</button><button data-page="community">Community</button><button data-page="profile">Profile</button></nav>
+</header>
+<noscript><div style="margin:16px auto;padding:14px;max-width:900px;background:#3a1b23;color:#fff;border:1px solid #ff4f72;border-radius:10px">WALLTALK needs JavaScript to draw and use its buttons. Open this file in a full web browser (such as Safari or Chrome), not a static file preview.</div></noscript>
+<main class="wrap">
+  <section class="hero">
+    <div><div class="eyebrow">The digital street canvas</div><h1>MAKE SOME<br><span style="color:var(--lime)">NOISE.</span></h1><p>Build a piece, find your style, and put your work on the wall. Keep it creative. Keep it yours.</p></div>
+    <div class="stamp">NO RULES. JUST ART.</div>
+  </section>
+  <div class="tabs"><button class="tab active" data-page="studio">01 / CREATE</button><button class="tab" data-page="community">02 / THE WALL</button><button class="tab" data-page="profile">03 / YOUR PROFILE</button></div>
+
+  <section id="studio">
+    <div class="editor-grid">
+      <div class="panel">
+        <div class="row canvas-actions" style="margin-bottom:10px">
+          <button class="btn secondary small" id="fullscreen">⛶ Full screen</button>
+          <button class="btn secondary small" id="zoomOut" aria-label="Zoom out">−</button>
+          <button class="btn secondary small" id="zoomReset">Reset zoom</button>
+          <button class="btn secondary small" id="zoomIn" aria-label="Zoom in">＋</button>
+          <button class="btn secondary small" id="collapseTools">Hide tools</button>
+        </div>
+        <div class="canvas-wrap" id="canvasWrap"><span class="canvas-label">YOUR CANVAS · PINCH TO ZOOM</span><canvas id="art" width="960" height="600" aria-label="Graffiti drawing canvas"></canvas></div>
+        <div class="row" style="margin-top:12px"><button class="btn secondary" id="undo">↶ Undo</button><button class="btn secondary" id="clear">Clear</button><button class="btn secondary" id="download">↓ Save PNG</button></div>
+      </div>
+      <aside class="panel controls" id="toolPanel">
+        <div class="field"><label for="words">Your lettering</label><input id="words" type="text" maxlength="22" value="WALLTALK" placeholder="Type your tag..."></div>
+        <div class="field"><label>Creation mode</label><div class="tools"><button class="tool" data-tool="text">✦ Lettering</button><button class="tool" data-tool="spray">✺ Spray</button><button class="tool active" data-tool="draw">〰 Draw</button></div></div>
+        <div class="field"><label>Paint color</label><div class="row"><input type="color" id="color" value="#c7ff3d"><select id="font"><option value="Impact">Impact</option><option value="Arial Black">Arial Black</option><option value="Georgia">Georgia</option><option value="monospace">Mono</option><option value="Trebuchet MS">Trebuchet</option><option value="Courier New">Courier</option><option value="Verdana">Verdana</option><option value=" fantasy">Fantasy</option></select></div></div>
+        <div class="field"><label for="size">Brush / letter size <span id="sizeVal">72</span></label><input type="range" id="size" min="8" max="150" value="72"></div>
+        <div class="field"><label for="outline">Outline color</label><div class="row"><input type="color" id="outline" value="#ff4fa3"><button class="btn secondary small" id="background">Change wall</button></div></div>
+        <div class="field"><label>Layers</label><div class="row"><button class="btn secondary small" id="addLayer">＋ Add layer</button><button class="btn secondary small" id="clearLayer">Clear active</button></div><div id="layerList" class="layer-list"></div><div class="note">Keep lettering, outlines, and paint on separate layers. Select a layer before drawing.</div></div>
+        <div class="field"><label>Quick effects</label><div class="row"><button class="btn secondary small" id="drip">＋ Drip vibe</button><button class="btn secondary small" id="splatter">✺ Splatter</button></div><div class="row"><button class="btn secondary small" id="glow">✧ Neon glow</button><button class="btn secondary small" id="shadow">▰ 3D shadow</button></div></div>
+        <button class="btn" id="addText">Place lettering on canvas</button>
+        <div class="note">Draw is selected by default. Drag your finger or mouse across the canvas to paint. Choose Spray for misty dots, or Lettering to tap and place your words. Select a layer before painting to keep elements separate.</div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="community" class="hidden">
+    <div class="panel" style="margin-bottom:17px">
+      <div class="section-head" style="margin:0 0 12px"><h2>Drop your piece</h2><span>Share it with the wall</span></div>
+      <div class="row"><div class="field"><label for="artist">Artist tag (not your real name)</label><input id="artist" type="text" maxlength="20" placeholder="@yourtag"></div><div class="field"><label for="postCaption">Caption</label><input id="postCaption" type="text" maxlength="90" placeholder="What's the vibe?"></div></div>
+      <button class="btn" id="publish" style="margin-top:12px">＋ Post current canvas</button>
+      <p class="note">This demo stores posts only in this browser. It does not upload art to a public server.</p>
+    </div>
+    <div class="section-head"><h2>Fresh on the wall</h2><span id="postCount">COMMUNITY FEED</span></div>
+    <div id="feed" class="feed"></div>
+  </section>
+  <section id="profile" class="hidden">
+    <div class="panel" style="max-width:760px;margin:auto">
+      <div class="eyebrow">Your corner of the wall</div>
+      <div style="display:flex;align-items:center;gap:15px;margin:12px 0 20px">
+        <div id="profileBadge" style="width:68px;height:68px;border-radius:50%;display:grid;place-items:center;background:var(--lime);color:#111;font-size:25px;font-weight:1000">W</div>
+        <div><h2 id="profileHeading" style="margin:0;font-size:25px">Your artist profile</h2><p id="profileStats" class="note">0 pieces posted · Local profile</p></div>
+      </div>
+      <div class="field"><label for="profileName">Artist tag</label><input id="profileName" type="text" maxlength="20" placeholder="e.g. neon_wren"></div>
+      <div class="field" style="margin-top:13px"><label for="profileBio">Artist bio</label><textarea id="profileBio" maxlength="140" placeholder="A little about your style..."></textarea></div>
+      <button class="btn" id="saveProfile" style="margin-top:12px">Save profile</button>
+      <p class="note" style="margin-top:12px">This prototype keeps your profile on this device only. Don't use your full name, address, school, or other private information.</p>
+      <div class="section-head"><h2>Your pieces</h2><span>YOUR GALLERY</span></div>
+      <div id="myGallery" class="feed"></div>
+    </div>
+  </section>
+  <footer><span>WALLTALK © · A space for creative expression</span><span>Respect artists · Credit inspiration · Keep personal info private</span></footer>
+</main>
+<div id="toast" class="toast hidden" role="status"></div>
+<script>
+const canvas=document.getElementById('art'),displayCtx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+let ctx=null,tool='draw',drawing=false,last=null,history=[],wall=0,likes={};
+let layers=[],activeLayerId=null;
+function makeLayer(name,locked=false){let c=document.createElement('canvas');c.width=canvas.width;c.height=canvas.height;return{id:'layer-'+Date.now()+'-'+Math.random().toString(36).slice(2,7),name,canvas:c,ctx:c.getContext('2d'),visible:true,locked};}
+function activeLayer(){return layers.find(l=>l.id===activeLayerId)||layers[layers.length-1]}
+function selectLayer(id){let layer=layers.find(l=>l.id===id);if(!layer||layer.locked)return;activeLayerId=id;ctx=layer.ctx;history=[];snapshot();renderLayers();renderLayerList()}
+function renderLayers(){displayCtx.clearRect(0,0,canvas.width,canvas.height);for(const layer of layers){if(layer.visible)displayCtx.drawImage(layer.canvas,0,0)}}
+function renderLayerList(){let host=$('layerList');if(!host)return;host.innerHTML='';layers.slice().reverse().forEach(layer=>{let row=document.createElement('div');row.className='layer-row'+(layer.id===activeLayerId?' selected':'');let choose=document.createElement('button');choose.className='layer-select';choose.textContent=(layer.locked?'🔒 ':'')+layer.name;choose.disabled=layer.locked;choose.onclick=()=>selectLayer(layer.id);let vis=document.createElement('button');vis.className='layer-mini';vis.textContent=layer.visible?'◉':'○';vis.title='Toggle visibility';vis.onclick=()=>{layer.visible=!layer.visible;renderLayers();renderLayerList()};let del=document.createElement('button');del.className='layer-mini';del.textContent='×';del.title='Delete layer';del.disabled=layer.locked||layers.filter(x=>!x.locked).length<=1;del.onclick=()=>{layers=layers.filter(x=>x.id!==layer.id);if(activeLayerId===layer.id){let next=layers.filter(x=>!x.locked).slice(-1)[0];activeLayerId=next.id;ctx=next.ctx;history=[];snapshot()}renderLayers();renderLayerList()};row.append(choose,vis,del);host.append(row)})}
+function addLayer(){let count=layers.filter(l=>!l.locked).length+1,layer=makeLayer('Layer '+count);layers.push(layer);activeLayerId=layer.id;ctx=layer.ctx;history=[];snapshot();renderLayers();renderLayerList();notify('New layer added.')}
+layers.push(makeLayer('Wall background',true));layers.push(makeLayer('Layer 1'));activeLayerId=layers[1].id;ctx=layers[1].ctx;
+const walls=['#11151c','#252027','#17242a','#29251c'];
+function paintWall(){let bg=layers[0].ctx;bg.clearRect(0,0,canvas.width,canvas.height);bg.fillStyle=walls[wall%walls.length];bg.fillRect(0,0,canvas.width,canvas.height);bg.save();bg.globalAlpha=.12;for(let i=0;i<canvas.width;i+=32){bg.strokeStyle='#aab4c1';bg.beginPath();bg.moveTo(i,0);bg.lineTo(i,600);bg.stroke()}for(let y=0;y<600;y+=32){bg.beginPath();bg.moveTo(0,y);bg.lineTo(960,y);bg.stroke()}bg.restore();bg.fillStyle='#ffffff12';bg.font='bold 16px monospace';bg.fillText('WALLTALK // OPEN CANVAS',22,570);renderLayers()}
+function snapshot(){if(!ctx)return;history.push({layerId:activeLayerId,data:activeLayer().canvas.toDataURL()});if(history.length>30)history.shift()}
+function restore(item){if(!item)return;let layer=layers.find(l=>l.id===item.layerId);if(!layer)return;let im=new Image();im.onload=()=>{layer.ctx.clearRect(0,0,canvas.width,canvas.height);layer.ctx.drawImage(im,0,0);if(layer.id===activeLayerId)ctx=layer.ctx;renderLayers()};im.src=item.data}
+paintWall();renderLayerList();snapshot();
+function pos(e){let r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)*canvas.width/r.width,y:(e.clientY-r.top)*canvas.height/r.height}}
+function stampText(x,y){snapshot();let text=$('words').value.trim()||'YOUR TAG';let size=+$('size').value;ctx.save();ctx.translate(x,y);ctx.rotate(-.035);ctx.font=`1000 ${size}px "${$('font').value}"`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';ctx.lineWidth=Math.max(5,size*.12);ctx.strokeStyle=$('outline').value;ctx.strokeText(text,0,0);ctx.fillStyle=$('color').value;ctx.shadowColor=$('color').value;ctx.shadowBlur=12;ctx.fillText(text,0,0);ctx.restore();renderLayers()}
+const activePointers=new Map();let zoom=1,panX=0,panY=0,pinchStart=null;
+function applyZoom(){canvas.style.transform=`translate(${panX}px,${panY}px) scale(${zoom})`;}
+function clampZoom(){zoom=Math.max(1,Math.min(3,zoom));}
+function pointerDistance(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+canvas.addEventListener('pointerdown',e=>{
+  e.preventDefault();activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  try{canvas.setPointerCapture(e.pointerId)}catch(err){}
+  if(activePointers.size>=2){drawing=false;let pts=[...activePointers.values()];pinchStart={distance:pointerDistance(pts[0],pts[1]),zoom,midX:(pts[0].x+pts[1].x)/2,midY:(pts[0].y+pts[1].y)/2,panX,panY};return}
+  drawing=true;last=pos(e);
+  if(tool==='text'){stampText(last.x,last.y);drawing=false}
+  else{snapshot();if(tool==='spray')spray(last.x,last.y);else{ctx.fillStyle=$('color').value;ctx.beginPath();ctx.arc(last.x,last.y,Math.max(2,+$('size').value/10),0,Math.PI*2);ctx.fill()}renderLayers()}
+});
+canvas.addEventListener('pointermove',e=>{
+  if(!activePointers.has(e.pointerId))return;
+  activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(activePointers.size>=2&&pinchStart){e.preventDefault();let pts=[...activePointers.values()],dist=pointerDistance(pts[0],pts[1]),midX=(pts[0].x+pts[1].x)/2,midY=(pts[0].y+pts[1].y)/2;zoom=pinchStart.zoom*(dist/pinchStart.distance);clampZoom();panX=pinchStart.panX+(midX-pinchStart.midX);panY=pinchStart.panY+(midY-pinchStart.midY);applyZoom();return}
+  if(!drawing)return;e.preventDefault();let p=pos(e);
+  if(tool==='draw'){ctx.strokeStyle=$('color').value;ctx.lineWidth=+$('size').value/5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke()}
+  else if(tool==='spray')spray(p.x,p.y);last=p;renderLayers();
+});
+function endPointer(e){activePointers.delete(e.pointerId);if(activePointers.size<2)pinchStart=null;if(activePointers.size===0)drawing=false}
+canvas.addEventListener('pointerup',endPointer);canvas.addEventListener('pointercancel',endPointer);
+function spray(x,y){let c=$('color').value;ctx.fillStyle=c;let radius=+$('size').value/2;for(let i=0;i<42;i++){let a=Math.random()*Math.PI*2,d=Math.random()*radius;ctx.globalAlpha=.15+Math.random()*.55;ctx.beginPath();ctx.arc(x+Math.cos(a)*d,y+Math.sin(a)*d,Math.random()*2.5+.5,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;renderLayers()}
+document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{tool=b.dataset.tool;document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x===b))});
+$('size').oninput=()=> $('sizeVal').textContent=$('size').value;
+$('zoomIn').onclick=()=>{zoom=Math.min(3,zoom+.2);applyZoom()};
+$('zoomOut').onclick=()=>{zoom=Math.max(1,zoom-.2);if(zoom===1)panX=panY=0;applyZoom()};
+$('zoomReset').onclick=()=>{zoom=1;panX=panY=0;applyZoom()};
+$('collapseTools').onclick=()=>{let panel=$('toolPanel'),hidden=panel.classList.toggle('collapsed');$('collapseTools').textContent=hidden?'Show tools':'Hide tools'};
+$('fullscreen').onclick=()=>{let wrap=$('canvasWrap'),open=wrap.classList.toggle('fullscreen');document.body.classList.toggle('fullscreen-open',open);$('fullscreen').textContent=open?'✕ Exit full screen':'⛶ Full screen'};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('canvasWrap').classList.contains('fullscreen')){$('canvasWrap').classList.remove('fullscreen');document.body.classList.remove('fullscreen-open');$('fullscreen').textContent='⛶ Full screen'}});
+
+$('addText').onclick=()=>{tool='text';document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x.dataset.tool==='text'));stampText(480,300)};
+$('undo').onclick=()=>{if(history.length>1){history.pop();restore(history[history.length-1])}};
+$('clear').onclick=()=>{ctx.clearRect(0,0,canvas.width,canvas.height);renderLayers();snapshot()};
+$('addLayer').onclick=addLayer;
+$('clearLayer').onclick=()=>{if(ctx){ctx.clearRect(0,0,canvas.width,canvas.height);renderLayers();snapshot();notify('Active layer cleared.')}};
+$('download').onclick=()=>{renderLayers();let a=document.createElement('a');a.download='walltalk-art.png';a.href=canvas.toDataURL('image/png');a.click()};
+$('background').onclick=()=>{snapshot();wall++;paintWall()};
+$('splatter').onclick=()=>{snapshot();for(let i=0;i<160;i++){let x=Math.random()*960,y=Math.random()*600;ctx.fillStyle=$('color').value;ctx.globalAlpha=Math.random()*.7;ctx.beginPath();ctx.arc(x,y,Math.random()*5,0,7);ctx.fill()}ctx.globalAlpha=1;renderLayers()};
+$('glow').onclick=()=>{snapshot();let text=$('words').value.trim()||'WALLTALK';ctx.save();ctx.font=`1000 ${+$('size').value}px "${$('font').value}"`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.shadowColor=$('color').value;ctx.shadowBlur=34;ctx.fillStyle=$('color').value;ctx.fillText(text,480,300);ctx.shadowBlur=0;ctx.lineWidth=3;ctx.strokeStyle=$('outline').value;ctx.strokeText(text,480,300);ctx.restore();renderLayers()};
+$('shadow').onclick=()=>{snapshot();let text=$('words').value.trim()||'WALLTALK';ctx.save();ctx.font=`1000 ${+$('size').value}px "${$('font').value}"`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.lineJoin='round';ctx.fillStyle='#050608';ctx.fillText(text,494,314);ctx.lineWidth=7;ctx.strokeStyle=$('outline').value;ctx.strokeText(text,480,300);ctx.fillStyle=$('color').value;ctx.fillText(text,480,300);ctx.restore();renderLayers()};
+$('drip').onclick=()=>{snapshot();let x=220+Math.random()*520,y=180+Math.random()*180;ctx.strokeStyle=$('color').value;ctx.lineWidth=9;for(let i=0;i<8;i++){let xx=x+i*18;ctx.beginPath();ctx.moveTo(xx,y);ctx.lineTo(xx,y+20+Math.random()*65);ctx.stroke();ctx.beginPath();ctx.arc(xx,y+20+Math.random()*65,4,0,7);ctx.fillStyle=$('color').value;ctx.fill()}renderLayers()};
+function switchPage(page){['studio','community','profile'].forEach(id=>$(id).classList.toggle('hidden',id!==page));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));if(page==='community')renderFeed();if(page==='profile')renderProfile()}
+document.querySelectorAll('[data-page]').forEach(b=>b.onclick=()=>switchPage(b.dataset.page));
+function loadPosts(){try{return JSON.parse(localStorage.getItem('walltalk_posts')||'[]')}catch{return []}}
+function savePosts(p){try{localStorage.setItem('walltalk_posts',JSON.stringify(p.slice(0,30)))}catch{notify('Browser storage is full. Save your art as a PNG instead.')}}
+function publish(){renderLayers();let posts=loadPosts();posts.unshift({id:Date.now(),artist:$('artist').value.trim().replace(/^@?/,'')||'guest-artist',caption:$('postCaption').value.trim()||'Fresh paint on the wall.',image:canvas.toDataURL('image/jpeg',.78),date:new Date().toLocaleDateString()});savePosts(posts);$('postCaption').value='';renderFeed();notify('Your piece was added to this browser’s wall.')}
+$('publish').onclick=publish;
+function renderFeed(){let posts=loadPosts(),feed=$('feed');$('postCount').textContent=posts.length+' POSTS';feed.innerHTML='';if(!posts.length){feed.innerHTML='<div class="empty">The wall is waiting for its first piece. Make something in the Studio and post it here.</div>';return}
+posts.forEach(p=>{let card=document.createElement('article');card.className='panel post';let im=document.createElement('img');im.className='art';im.src=p.image;im.alt='Graffiti artwork by '+p.artist;let body=document.createElement('div');body.className='post-body';let top=document.createElement('div');top.className='post-top';let handle=document.createElement('span');handle.className='handle';handle.textContent='@'+p.artist;let time=document.createElement('span');time.className='time';time.textContent=p.date;top.append(handle,time);let cap=document.createElement('p');cap.className='caption';cap.textContent=p.caption;let actions=document.createElement('div');actions.className='post-actions';let like=document.createElement('button');like.textContent='♡ Like';like.onclick=()=>{likes[p.id]=!likes[p.id];like.textContent=likes[p.id]?'♥ Liked':'♡ Like'};let report=document.createElement('button');report.textContent='⚑ Report';report.onclick=()=>notify('Thanks. In this demo, reports are not sent to a moderator.');actions.append(like,report);body.append(top,cap,actions);card.append(im,body);feed.append(card)})}
+let toastTimer;function notify(msg){let t=$('toast');t.textContent=msg;t.classList.remove('hidden');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.add('hidden'),2600)}
+function getProfile(){try{return JSON.parse(localStorage.getItem('walltalk_profile')||'{}')}catch{return {}}}
+function renderProfile(){let profile=getProfile(),name=profile.name||'';$('profileName').value=name;$('profileBio').value=profile.bio||'';$('profileHeading').textContent=name?'@'+name:'Your artist profile';$('profileBadge').textContent=(name[0]||'W').toUpperCase();let mine=loadPosts().filter(post=>post.artist.toLowerCase()===(name||'').toLowerCase());$('profileStats').textContent=mine.length+' pieces posted · Local profile';let gallery=$('myGallery');gallery.innerHTML='';if(!name||!mine.length){gallery.innerHTML='<div class="empty">Save an artist tag and post your first piece to start your gallery.</div>';return}mine.forEach(post=>{let card=document.createElement('article');card.className='panel post';let img=document.createElement('img');img.className='art';img.src=post.image;img.alt='Your graffiti artwork';let body=document.createElement('div');body.className='post-body';let caption=document.createElement('p');caption.className='caption';caption.textContent=post.caption;body.append(caption);card.append(img,body);gallery.append(card)})}
+$('saveProfile').onclick=()=>{let name=$('profileName').value.trim().replace(/^@/,'');let bio=$('profileBio').value.trim();try{localStorage.setItem('walltalk_profile',JSON.stringify({name,bio}));notify('Your local profile was saved.');renderProfile()}catch{notify('Could not save profile in this browser.')}};
+renderFeed();renderProfile();renderLayerList();
+</script>
+</body>
+</html>
