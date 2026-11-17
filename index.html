@@ -119,7 +119,7 @@ button:focus-visible,.tool-details summary:focus-visible{outline:2px solid var(-
 
 #bgColor{width:100%;height:38px;padding:3px;border:1px solid var(--line);border-radius:9px;background:#111}
 #bgStyle,#bgTexture{width:100%;max-width:100%}
-</style>
+.sticker-grid button{min-height:46px}.canvas-wrap canvas{touch-action:none;pointer-events:auto;user-select:none;-webkit-user-select:none}#bgColor{cursor:pointer}</style>
 </head>
 <body>
 <header>
@@ -213,23 +213,20 @@ function applyZoom(){canvas.style.transform=`translate(${panX}px,${panY}px) scal
 function clampZoom(){zoom=Math.max(1,Math.min(3,zoom));}
 function pointerDistance(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
 canvas.addEventListener('pointerdown',e=>{
-  e.preventDefault();activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  try{canvas.setPointerCapture(e.pointerId)}catch(err){}
-  if(activePointers.size>=2){drawing=false;let pts=[...activePointers.values()];pinchStart={distance:pointerDistance(pts[0],pts[1]),zoom,midX:(pts[0].x+pts[1].x)/2,midY:(pts[0].y+pts[1].y)/2,panX,panY};return}
-  drawing=true;last=pos(e);
-  if(tool==='text'){stampText(last.x,last.y);drawing=false}
-  else{snapshot();if(tool==='spray')spray(last.x,last.y);else{ctx.fillStyle=$('color').value;ctx.beginPath();ctx.arc(last.x,last.y,Math.max(2,+$('size').value/10),0,Math.PI*2);ctx.fill()}renderLayers()}
+ e.preventDefault();if(e.button!==undefined&&e.button!==0)return;
+ if(!ctx||!activeLayer()||activeLayer().locked){const layer=layers.find(l=>!l.locked);if(!layer)return;activeLayerId=layer.id;ctx=layer.ctx;renderLayerList()}
+ drawing=true;last=pos(e);try{canvas.setPointerCapture(e.pointerId)}catch(err){}
+ if(tool==='text'){stampText(last.x,last.y);drawing=false;return}
+ snapshot();if(tool==='spray')spray(last.x,last.y);else{ctx.save();ctx.fillStyle=$('color').value;ctx.beginPath();ctx.arc(last.x,last.y,Math.max(1,+$('size').value/10),0,Math.PI*2);ctx.fill();ctx.restore();renderLayers()}
 });
 canvas.addEventListener('pointermove',e=>{
-  if(!activePointers.has(e.pointerId))return;
-  activePointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
-  if(activePointers.size>=2&&pinchStart){e.preventDefault();let pts=[...activePointers.values()],dist=pointerDistance(pts[0],pts[1]),midX=(pts[0].x+pts[1].x)/2,midY=(pts[0].y+pts[1].y)/2;zoom=pinchStart.zoom*(dist/pinchStart.distance);clampZoom();panX=pinchStart.panX+(midX-pinchStart.midX);panY=pinchStart.panY+(midY-pinchStart.midY);applyZoom();return}
-  if(!drawing)return;e.preventDefault();let p=pos(e);
-  if(tool==='draw'){ctx.strokeStyle=$('color').value;ctx.lineWidth=+$('size').value/5;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke()}
-  else if(tool==='spray')spray(p.x,p.y);last=p;renderLayers();
+ if(!drawing||!last)return;e.preventDefault();const p=pos(e);
+ if(tool==='draw'){ctx.save();ctx.strokeStyle=$('color').value;ctx.lineWidth=Math.max(1,+$('size').value/5);ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(last.x,last.y);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.restore();renderLayers()}
+ else if(tool==='spray')spray(p.x,p.y);
+ last=p;
 });
-function endPointer(e){activePointers.delete(e.pointerId);if(activePointers.size<2)pinchStart=null;if(activePointers.size===0)drawing=false}
-canvas.addEventListener('pointerup',endPointer);canvas.addEventListener('pointercancel',endPointer);
+function endPointer(){drawing=false;last=null}
+canvas.addEventListener('pointerup',endPointer);canvas.addEventListener('pointercancel',endPointer);canvas.addEventListener('lostpointercapture',endPointer);
 function spray(x,y){let c=$('color').value;ctx.fillStyle=c;let radius=+$('size').value/2;for(let i=0;i<42;i++){let a=Math.random()*Math.PI*2,d=Math.random()*radius;ctx.globalAlpha=.15+Math.random()*.55;ctx.beginPath();ctx.arc(x+Math.cos(a)*d,y+Math.sin(a)*d,Math.random()*2.5+.5,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;renderLayers()}
 document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{tool=b.dataset.tool;document.querySelectorAll('[data-tool]').forEach(x=>x.classList.toggle('active',x===b))});
 
@@ -411,33 +408,29 @@ renderFeed();renderProfile();renderLayerList();
 
 <script>
 (function(){
- const color=document.getElementById('bgColor'),style=document.getElementById('bgStyle'),texture=document.getElementById('bgTexture'),apply=document.getElementById('applyBackground');
- if(!color||!style||!texture||!apply)return;
+ const color=$('bgColor'),style=$('bgStyle'),texture=$('bgTexture'),apply=$('applyBackground');
  const bgLayer=layers.find(l=>l.locked)||layers[0];
  function paintBackground(){
-  if(!bgLayer)return;
-  const c=bgLayer.ctx,w=canvas.width,h=canvas.height,amount=Number(texture.value)/100;
-  c.clearRect(0,0,w,h);c.fillStyle=color.value;c.fillRect(0,0,w,h);
-  if(style.value==='grid'){
-   c.save();c.globalAlpha=.08+amount*.28;c.strokeStyle='#ffffff';c.lineWidth=1;
-   for(let x=0;x<w;x+=32){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke()}
-   for(let y=0;y<h;y+=32){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke()}c.restore();
-  }else if(style.value==='dots'){
-   c.save();c.fillStyle='#ffffff';c.globalAlpha=.08+amount*.3;
-   for(let y=10;y<h;y+=22)for(let x=10;x<w;x+=22){c.beginPath();c.arc(x,y,1+amount*2,0,Math.PI*2);c.fill()}c.restore();
-  }else if(style.value==='brick'){
-   c.save();c.globalAlpha=.14+amount*.42;c.strokeStyle='#e9d4c2';c.lineWidth=3;
-   const bh=42,bw=96;
-   for(let y=0,row=0;y<h;y+=bh,row++){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();let offset=row%2? -bw/2:0;for(let x=offset;x<w;x+=bw){c.beginPath();c.moveTo(x,y);c.lineTo(x,y+bh);c.stroke()}}
-   c.restore();
-  }else if(style.value==='concrete'){
-   c.save();c.globalAlpha=.04+amount*.18;
-   for(let i=0;i<2600*amount;i++){c.fillStyle=Math.random()>.5?'#ffffff':'#000000';let x=Math.random()*w,y=Math.random()*h,s=Math.random()*3+1;c.fillRect(x,y,s,s)}c.restore();
+  if(!bgLayer)return;const c=bgLayer.ctx,w=canvas.width,h=canvas.height,amount=Number(texture.value)/100;
+  c.save();c.globalAlpha=1;c.clearRect(0,0,w,h);c.fillStyle=color.value;c.fillRect(0,0,w,h);
+  if(style.value==='grid'||style.value==='dots'||style.value==='brick'||style.value==='concrete'){
+   c.globalAlpha=.12+amount*.45;
+   if(style.value==='grid'){c.strokeStyle='#fff';for(let x=0;x<w;x+=32){c.beginPath();c.moveTo(x,0);c.lineTo(x,h);c.stroke()}for(let y=0;y<h;y+=32){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke()}}
+   if(style.value==='dots'){c.fillStyle='#fff';for(let y=8;y<h;y+=22)for(let x=8;x<w;x+=22){c.beginPath();c.arc(x,y,1+amount*2,0,7);c.fill()}}
+   if(style.value==='brick'){c.strokeStyle='#e9d4c2';c.lineWidth=3;for(let y=0,row=0;y<h;y+=42,row++){c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();for(let x=(row%2?-48:0);x<w;x+=96){c.beginPath();c.moveTo(x,y);c.lineTo(x,y+42);c.stroke()}}}
+   if(style.value==='concrete'){for(let i=0;i<2200*amount;i++){c.fillStyle=Math.random()>.5?'#fff':'#000';let x=Math.random()*w,y=Math.random()*h;c.fillRect(x,y,2,2)}}
   }
-  renderLayers();
+  c.restore();renderLayers();
  }
- apply.addEventListener('click',()=>{paintBackground();notify('Canvas background updated.')});
+ apply.addEventListener('click',()=>{paintBackground();notify('Background applied')});
+ color.addEventListener('input',paintBackground);style.addEventListener('change',paintBackground);texture.addEventListener('input',paintBackground);
  paintBackground();
+ const stickerBox=document.createElement('details');stickerBox.className='tool-details';stickerBox.innerHTML='<summary>✦ Stickers & wall designs</summary><div class="tool-details-body"><div class="note">Choose a sticker to place it on your selected art layer.</div><div class="sticker-grid"></div></div>';
+ const grid=stickerBox.querySelector('.sticker-grid');
+ const stickers=['★','✦','✹','☠','⚡','♥','✿','☄','👑','🔥','🌹','🦋','🎯','💎','☮','☀'];
+ grid.style.cssText='display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:9px';
+ stickers.forEach(symbol=>{const b=document.createElement('button');b.type='button';b.className='btn secondary small';b.textContent=symbol;b.style.fontSize='22px';b.addEventListener('click',()=>{let layer=activeLayer();if(!layer||layer.locked){layer=layers.find(l=>!l.locked);activeLayerId=layer.id;ctx=layer.ctx;renderLayerList()}snapshot();ctx.save();ctx.font=(Math.max(34,+$('size').value))+'px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(symbol,canvas.width/2,canvas.height/2);ctx.restore();renderLayers();notify('Sticker added to your canvas')});grid.append(b)});
+ const panel=$('toolPanel');const bg=panel.querySelector('details.tool-details');if(bg)bg.after(stickerBox);
 })();
 </script>
 
